@@ -1,0 +1,61 @@
+You are helping me continue an existing project called “LouvorPro”, a worship ministry management app for churches.
+
+Important: do not rebuild the project from scratch unless absolutely necessary. First, inspect the existing codebase and preserve the current architecture, dependencies, naming conventions, and file structure as much as possible.
+
+Project context:
+- App name: LouvorPro
+- Purpose: a modern platform for worship ministry management, including team scheduling, song repertoire organization, and communication for church worship teams
+- Frontend stack: React 19 + TypeScript + Vite
+- Styling: Tailwind CSS
+- Existing tooling includes Express and better-sqlite3
+- The project may use Gemini API
+- The app also requests microphone permission
+- Keep the app compatible with the current Vite/TypeScript setup
+
+What I want you to do:
+1. Analyze the current project structure before making changes.
+2. Identify what is already implemented and what is missing or broken.
+3. Continue development in a clean, production-minded way.
+4. Preserve existing code whenever possible instead of replacing working parts.
+5. If something must be changed, explain why and keep the solution minimal.
+
+Build or improve the app around these core modules:
+- Worship team member management
+- Service scheduling / rota management
+- Song repertoire library
+- Setlist planning for each service
+- Internal communication / announcements for the team
+- Optional rehearsal notes
+- Optional audio or voice-note support if microphone access is relevant
+- Admin dashboard for leaders
+- Simple persistent storage layer using SQLite if backend features are needed
+
+Technical requirements:
+- Use React + TypeScript
+- Keep Vite as the frontend build tool
+- Use clean reusable components
+- Prefer modular folders and clear separation of concerns
+- Use responsive UI
+- Use accessible forms and navigation
+- Do not introduce unnecessary libraries
+- If backend is needed, use Express in a simple and maintainable way
+- If database is needed, use better-sqlite3
+- Keep environment variables safe and do not hardcode secrets
+- If Gemini is used, encapsulate AI features behind service functions
+
+Expected workflow:
+- First summarize the current state of the codebase
+- Then propose an implementation plan
+- Then implement the next most important improvements
+- After each meaningful change, explain what was changed and why
+- Flag any missing files, broken imports, or architecture inconsistencies
+
+Product direction:
+The app should feel practical for real church worship ministry use, not like a generic admin panel. Focus on usability for leaders and volunteers. The interface should be modern, clean, and fast, with emphasis on:
+- clarity
+- low friction
+- mobile friendliness
+- easy weekly scheduling
+- quick access to songs and setlists
+
+If there are ambiguities, prefer the most practical church workflow and document your assumptions clearly.

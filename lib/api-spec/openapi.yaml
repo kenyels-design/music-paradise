@@ -1,22 +1,31 @@
 openapi: 3.1.0
 info:
-  # Do not change the title, if the title changes, the import paths will be broken
   title: Api
   version: 0.1.0
-  description: API specification
+  description: LouvorPro worship ministry management API
 servers:
   - url: /api
     description: Base API path
 tags:
   - name: health
     description: Health operations
+  - name: members
+    description: Worship team members
+  - name: songs
+    description: Song repertoire library
+  - name: services
+    description: Worship services and scheduling
+  - name: setlists
+    description: Setlist management per service
+  - name: announcements
+    description: Team announcements and messages
+
 paths:
   /healthz:
     get:
       operationId: healthCheck
       tags: [health]
       summary: Health check
-      description: Returns server health status
       responses:
         "200":
           description: Healthy
@@ -24,6 +33,504 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthStatus"
+
+  # Members
+  /members:
+    get:
+      operationId: listMembers
+      tags: [members]
+      summary: List all team members
+      responses:
+        "200":
+          description: List of members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Member"
+    post:
+      operationId: createMember
+      tags: [members]
+      summary: Create a team member
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMemberInput"
+      responses:
+        "201":
+          description: Created member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+
+  /members/{id}:
+    get:
+      operationId: getMember
+      tags: [members]
+      summary: Get a team member
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Member found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+        "404":
+          description: Not found
+    put:
+      operationId: updateMember
+      tags: [members]
+      summary: Update a team member
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateMemberInput"
+      responses:
+        "200":
+          description: Updated member
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Member"
+    delete:
+      operationId: deleteMember
+      tags: [members]
+      summary: Delete a team member
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Songs
+  /songs:
+    get:
+      operationId: listSongs
+      tags: [songs]
+      summary: List all songs
+      parameters:
+        - name: tag
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: key
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: search
+          in: query
+          required: false
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of songs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Song"
+    post:
+      operationId: createSong
+      tags: [songs]
+      summary: Create a song
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSongInput"
+      responses:
+        "201":
+          description: Created song
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Song"
+
+  /songs/{id}:
+    get:
+      operationId: getSong
+      tags: [songs]
+      summary: Get a song
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Song found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Song"
+        "404":
+          description: Not found
+    put:
+      operationId: updateSong
+      tags: [songs]
+      summary: Update a song
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSongInput"
+      responses:
+        "200":
+          description: Updated song
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Song"
+    delete:
+      operationId: deleteSong
+      tags: [songs]
+      summary: Delete a song
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Services
+  /services:
+    get:
+      operationId: listServices
+      tags: [services]
+      summary: List all worship services
+      parameters:
+        - name: upcoming
+          in: query
+          required: false
+          schema:
+            type: boolean
+      responses:
+        "200":
+          description: List of services
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Service"
+    post:
+      operationId: createService
+      tags: [services]
+      summary: Create a worship service
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceInput"
+      responses:
+        "201":
+          description: Created service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+
+  /services/{id}:
+    get:
+      operationId: getService
+      tags: [services]
+      summary: Get a worship service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Service found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+        "404":
+          description: Not found
+    put:
+      operationId: updateService
+      tags: [services]
+      summary: Update a worship service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceInput"
+      responses:
+        "200":
+          description: Updated service
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Service"
+    delete:
+      operationId: deleteService
+      tags: [services]
+      summary: Delete a worship service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  /services/{id}/assignments:
+    get:
+      operationId: listServiceAssignments
+      tags: [services]
+      summary: List member assignments for a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of assignments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ServiceAssignment"
+    post:
+      operationId: createServiceAssignment
+      tags: [services]
+      summary: Assign a member to a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateServiceAssignmentInput"
+      responses:
+        "201":
+          description: Created assignment
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ServiceAssignment"
+
+  /services/{id}/assignments/{assignmentId}:
+    delete:
+      operationId: deleteServiceAssignment
+      tags: [services]
+      summary: Remove a member assignment from a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Setlists
+  /services/{id}/setlist:
+    get:
+      operationId: getSetlist
+      tags: [setlists]
+      summary: Get the setlist for a service
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Setlist items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/SetlistItem"
+    post:
+      operationId: addToSetlist
+      tags: [setlists]
+      summary: Add a song to a service setlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateSetlistItemInput"
+      responses:
+        "201":
+          description: Added setlist item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetlistItem"
+
+  /services/{id}/setlist/{itemId}:
+    put:
+      operationId: updateSetlistItem
+      tags: [setlists]
+      summary: Update a setlist item (order, notes, key override)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateSetlistItemInput"
+      responses:
+        "200":
+          description: Updated setlist item
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SetlistItem"
+    delete:
+      operationId: removeFromSetlist
+      tags: [setlists]
+      summary: Remove a song from a service setlist
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+        - name: itemId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # Announcements
+  /announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [announcements]
+      summary: List all team announcements
+      responses:
+        "200":
+          description: List of announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Create a team announcement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateAnnouncementInput"
+      responses:
+        "201":
+          description: Created announcement
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  /announcements/{id}:
+    delete:
+      operationId: deleteAnnouncement
+      tags: [announcements]
+      summary: Delete an announcement
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
 components:
   schemas:
     HealthStatus:
@@ -34,3 +541,329 @@ components:
       required:
         - status
 
+    Member:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          type: string
+          description: "e.g. vocalist, guitarist, bassist, drummer, keys, sound, projection"
+        isLeader:
+          type: boolean
+        avatarUrl:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - email
+        - role
+        - isLeader
+        - createdAt
+
+    CreateMemberInput:
+      type: object
+      properties:
+        name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        role:
+          type: string
+        isLeader:
+          type: boolean
+        avatarUrl:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - name
+        - email
+        - role
+        - isLeader
+
+    Song:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        artist:
+          type: string
+          nullable: true
+        key:
+          type: string
+          nullable: true
+          description: "Musical key, e.g. C, G, Am, F#"
+        bpm:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        lyrics:
+          type: string
+          nullable: true
+        chordChart:
+          type: string
+          nullable: true
+        youtubeUrl:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        lastUsedAt:
+          type: string
+          format: date-time
+          nullable: true
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - tags
+        - createdAt
+
+    CreateSongInput:
+      type: object
+      properties:
+        title:
+          type: string
+        artist:
+          type: string
+          nullable: true
+        key:
+          type: string
+          nullable: true
+        bpm:
+          type: integer
+          nullable: true
+        tags:
+          type: array
+          items:
+            type: string
+        lyrics:
+          type: string
+          nullable: true
+        chordChart:
+          type: string
+          nullable: true
+        youtubeUrl:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - title
+        - tags
+
+    Service:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+          description: "Service date (YYYY-MM-DD)"
+        time:
+          type: string
+          nullable: true
+          description: "Service time (HH:MM)"
+        theme:
+          type: string
+          nullable: true
+        leaderNotes:
+          type: string
+          nullable: true
+        status:
+          type: string
+          description: "draft | confirmed | completed"
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - date
+        - status
+        - createdAt
+
+    CreateServiceInput:
+      type: object
+      properties:
+        title:
+          type: string
+        date:
+          type: string
+          format: date
+        time:
+          type: string
+          nullable: true
+        theme:
+          type: string
+          nullable: true
+        leaderNotes:
+          type: string
+          nullable: true
+        status:
+          type: string
+      required:
+        - title
+        - date
+        - status
+
+    ServiceAssignment:
+      type: object
+      properties:
+        id:
+          type: integer
+        serviceId:
+          type: integer
+        memberId:
+          type: integer
+        role:
+          type: string
+          nullable: true
+          description: "Role override for this specific service"
+        member:
+          $ref: "#/components/schemas/Member"
+      required:
+        - id
+        - serviceId
+        - memberId
+        - member
+
+    CreateServiceAssignmentInput:
+      type: object
+      properties:
+        memberId:
+          type: integer
+        role:
+          type: string
+          nullable: true
+      required:
+        - memberId
+
+    SetlistItem:
+      type: object
+      properties:
+        id:
+          type: integer
+        serviceId:
+          type: integer
+        songId:
+          type: integer
+        order:
+          type: integer
+        keyOverride:
+          type: string
+          nullable: true
+          description: "Key to use for this service (overrides song default)"
+        notes:
+          type: string
+          nullable: true
+        song:
+          $ref: "#/components/schemas/Song"
+      required:
+        - id
+        - serviceId
+        - songId
+        - order
+        - song
+
+    CreateSetlistItemInput:
+      type: object
+      properties:
+        songId:
+          type: integer
+        order:
+          type: integer
+        keyOverride:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+      required:
+        - songId
+        - order
+
+    UpdateSetlistItemInput:
+      type: object
+      properties:
+        order:
+          type: integer
+        keyOverride:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    Announcement:
+      type: object
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        body:
+          type: string
+        authorName:
+          type: string
+        isPinned:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - title
+        - body
+        - authorName
+        - isPinned
+        - createdAt
+
+    CreateAnnouncementInput:
+      type: object
+      properties:
+        title:
+          type: string
+        body:
+          type: string
+        authorName:
+          type: string
+        isPinned:
+          type: boolean
+      required:
+        - title
+        - body
+        - authorName
+        - isPinned

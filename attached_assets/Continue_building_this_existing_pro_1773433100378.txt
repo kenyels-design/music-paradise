@@ -1,0 +1,15 @@
+Continue building this existing project, LouvorPro, a worship ministry management app for churches.
+
+Add the following features in a clean and maintainable way, preserving the existing stack and code structure:
+- team member registration
+- worship schedule management
+- song library with keys, BPM, and tags
+- service setlist creation
+- leader notes for each service
+- simple announcements or team messages
+- responsive dashboard
+
+Use React + TypeScript + Vite on the frontend.
+Use Express + SQLite only where backend persistence is necessary.
+Keep the UI modern, clean, and optimized for real church workflow.
+Before coding, inspect the existing code and avoid rewriting working parts.

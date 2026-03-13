@@ -1,0 +1,18 @@
+packages:
+  "framer-motion": "For page transitions and smooth UI animations"
+  "date-fns": "For formatting service dates and times beautifully"
+  "@hookform/resolvers": "For Zod schema validation in forms"
+  "zod": "For local form validation schemas"
+
+images:
+  - path: "artifacts/louvorpro/public/images/logo.png"
+    description: "Minimalist modern church worship ministry logo, deep navy blue and warm gold, clean geometric symbol"
+    aspect_ratio: "1:1"
+  - path: "artifacts/louvorpro/public/images/hero-bg.png"
+    description: "Abstract subtle dark navy background with warm golden light leaks, elegant and reverent atmosphere"
+    aspect_ratio: "16:9"
+
+notes:
+  - Using generated API hooks from @workspace/api-client-react
+  - Shadcn UI components are pre-installed in src/components/ui
+  - Assuming standard REST patterns for invalidation (e.g., POST invalidates GET list)
