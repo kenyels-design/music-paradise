@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "wouter";
-import { useForm } from "react-hook-form";
 import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { 
   ArrowLeft, Calendar, Clock, Music, Users, 
   Plus, Trash2, GripVertical, Settings 
@@ -22,7 +22,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -34,6 +34,12 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+
+const statusLabel: Record<string, string> = {
+  draft: "Rascunho",
+  confirmed: "Confirmado",
+  completed: "Realizado",
+};
 
 export default function ServiceDetail() {
   const { id } = useParams();
@@ -54,7 +60,7 @@ export default function ServiceDetail() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getGetSetlistQueryKey(serviceId) });
-        toast({ title: "Song added to setlist" });
+        toast({ title: "Música adicionada ao setlist" });
         setAddSongOpen(false);
       }
     }
@@ -70,7 +76,7 @@ export default function ServiceDetail() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListServiceAssignmentsQueryKey(serviceId) });
-        toast({ title: "Team member assigned" });
+        toast({ title: "Membro escalado" });
         setAddMemberOpen(false);
       }
     }
@@ -82,7 +88,6 @@ export default function ServiceDetail() {
     }
   });
 
-  // Simple state for forms to avoid heavy hook-form setup for single selects
   const [selectedSongId, setSelectedSongId] = useState("");
   const [songKeyOverride, setSongKeyOverride] = useState("");
   
@@ -116,22 +121,25 @@ export default function ServiceDetail() {
     return <div className="space-y-4"><Skeleton className="h-10 w-32"/><Skeleton className="h-64 w-full"/></div>;
   }
 
-  if (!service) return <div>Service not found</div>;
+  if (!service) return <div>Culto não encontrado</div>;
 
   return (
     <div className="space-y-6 pb-20">
       <Link href="/services" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-foreground mb-2">
-        <ArrowLeft className="mr-2 h-4 w-4" /> Back to Schedule
+        <ArrowLeft className="mr-2 h-4 w-4" /> Voltar à Agenda
       </Link>
 
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-2">
             <h1 className="text-3xl font-display font-bold text-foreground">{service.title}</h1>
-            <Badge variant="secondary" className="capitalize">{service.status}</Badge>
+            <Badge variant="secondary">{statusLabel[service.status] || service.status}</Badge>
           </div>
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground">
-            <div className="flex items-center gap-1.5"><Calendar className="w-4 h-4"/> {format(parseISO(service.date), 'EEEE, MMM do')}</div>
+            <div className="flex items-center gap-1.5">
+              <Calendar className="w-4 h-4"/>
+              {format(parseISO(service.date), "EEEE, d 'de' MMMM", { locale: ptBR })}
+            </div>
             {service.time && <div className="flex items-center gap-1.5"><Clock className="w-4 h-4"/> {service.time}</div>}
             {service.theme && <div className="flex items-center gap-1.5"><Settings className="w-4 h-4"/> {service.theme}</div>}
           </div>
@@ -141,35 +149,35 @@ export default function ServiceDetail() {
       <Tabs defaultValue="setlist" className="w-full">
         <TabsList className="grid w-full grid-cols-2 max-w-md">
           <TabsTrigger value="setlist" className="flex items-center gap-2"><Music className="w-4 h-4"/> Setlist</TabsTrigger>
-          <TabsTrigger value="team" className="flex items-center gap-2"><Users className="w-4 h-4"/> Team</TabsTrigger>
+          <TabsTrigger value="team" className="flex items-center gap-2"><Users className="w-4 h-4"/> Equipe</TabsTrigger>
         </TabsList>
         
         <TabsContent value="setlist" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-foreground">Songs ({setlist?.length || 0})</h3>
+            <h3 className="text-lg font-semibold text-foreground">Músicas ({setlist?.length || 0})</h3>
             <Dialog open={addSongOpen} onOpenChange={setAddSongOpen}>
               <DialogTrigger asChild>
-                <Button size="sm"><Plus className="w-4 h-4 mr-1"/> Add Song</Button>
+                <Button size="sm"><Plus className="w-4 h-4 mr-1"/> Adicionar Música</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Add Song to Setlist</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Adicionar ao Setlist</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Select Song</label>
+                    <label className="text-sm font-medium">Selecionar Música</label>
                     <Select onValueChange={setSelectedSongId} value={selectedSongId}>
-                      <SelectTrigger><SelectValue placeholder="Choose a song..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Escolha uma música..." /></SelectTrigger>
                       <SelectContent>
-                        {songs?.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.title} ({s.key || 'No Key'})</SelectItem>)}
+                        {songs?.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.title} {s.key ? `(Tom: ${s.key})` : ''}</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Key Override (Optional)</label>
-                    <Input placeholder="e.g. G" value={songKeyOverride} onChange={e => setSongKeyOverride(e.target.value)} />
-                    <p className="text-xs text-muted-foreground">Leave blank to use default key</p>
+                    <label className="text-sm font-medium">Substituição de Tom (Opcional)</label>
+                    <Input placeholder="ex: G" value={songKeyOverride} onChange={e => setSongKeyOverride(e.target.value)} />
+                    <p className="text-xs text-muted-foreground">Deixe em branco para usar o tom padrão da música</p>
                   </div>
                   <Button className="w-full" onClick={handleAddSong} disabled={!selectedSongId || addSongMutation.isPending}>
-                    {addSongMutation.isPending ? "Adding..." : "Add to Setlist"}
+                    {addSongMutation.isPending ? "Adicionando..." : "Adicionar ao Setlist"}
                   </Button>
                 </div>
               </DialogContent>
@@ -179,10 +187,10 @@ export default function ServiceDetail() {
           <Card className="border-border/50">
             <CardContent className="p-0">
               {loadingSetlist ? (
-                <div className="p-6 text-center text-muted-foreground">Loading...</div>
+                <div className="p-6 text-center text-muted-foreground">Carregando...</div>
               ) : setlist?.length === 0 ? (
                 <div className="p-8 text-center text-muted-foreground border-b last:border-0 border-border/50">
-                  No songs added yet.
+                  Nenhuma música adicionada ainda.
                 </div>
               ) : (
                 <div className="divide-y divide-border/50">
@@ -199,7 +207,7 @@ export default function ServiceDetail() {
                           <h4 className="font-semibold text-foreground">{item.song.title}</h4>
                           <p className="text-sm text-muted-foreground">
                             {item.song.artist} 
-                            {(item.keyOverride || item.song.key) && ` • Key: ${item.keyOverride || item.song.key}`}
+                            {(item.keyOverride || item.song.key) && ` • Tom: ${item.keyOverride || item.song.key}`}
                             {item.song.bpm && ` • ${item.song.bpm} BPM`}
                           </p>
                         </div>
@@ -219,29 +227,29 @@ export default function ServiceDetail() {
 
         <TabsContent value="team" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-lg font-semibold text-foreground">Scheduled Team ({assignments?.length || 0})</h3>
+            <h3 className="text-lg font-semibold text-foreground">Equipe Escalada ({assignments?.length || 0})</h3>
             <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
               <DialogTrigger asChild>
-                <Button size="sm"><Plus className="w-4 h-4 mr-1"/> Assign Member</Button>
+                <Button size="sm"><Plus className="w-4 h-4 mr-1"/> Escalar Membro</Button>
               </DialogTrigger>
               <DialogContent>
-                <DialogHeader><DialogTitle>Assign Team Member</DialogTitle></DialogHeader>
+                <DialogHeader><DialogTitle>Escalar Membro da Equipe</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Select Member</label>
+                    <label className="text-sm font-medium">Selecionar Membro</label>
                     <Select onValueChange={setSelectedMemberId} value={selectedMemberId}>
-                      <SelectTrigger><SelectValue placeholder="Choose a member..." /></SelectTrigger>
+                      <SelectTrigger><SelectValue placeholder="Escolha um membro..." /></SelectTrigger>
                       <SelectContent>
                         {members?.map(m => <SelectItem key={m.id} value={m.id.toString()}>{m.name} ({m.role})</SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Role Override (Optional)</label>
-                    <Input placeholder="e.g. Lead Vocals instead of just Vocals" value={memberRoleOverride} onChange={e => setMemberRoleOverride(e.target.value)} />
+                    <label className="text-sm font-medium">Função neste Culto (Opcional)</label>
+                    <Input placeholder="ex: Vocal Principal em vez de apenas Vocal" value={memberRoleOverride} onChange={e => setMemberRoleOverride(e.target.value)} />
                   </div>
                   <Button className="w-full" onClick={handleAddMember} disabled={!selectedMemberId || addMemberMutation.isPending}>
-                    {addMemberMutation.isPending ? "Assigning..." : "Assign to Service"}
+                    {addMemberMutation.isPending ? "Escalando..." : "Escalar para o Culto"}
                   </Button>
                 </div>
               </DialogContent>
@@ -253,7 +261,7 @@ export default function ServiceDetail() {
               <Skeleton className="h-20 w-full" />
             ) : assignments?.length === 0 ? (
               <div className="col-span-2 py-12 text-center border-2 border-dashed rounded-xl border-border">
-                <p className="text-muted-foreground">No team members scheduled yet.</p>
+                <p className="text-muted-foreground">Nenhum membro escalado ainda.</p>
               </div>
             ) : (
               assignments?.map(assignment => (

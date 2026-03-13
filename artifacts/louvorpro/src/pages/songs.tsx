@@ -38,12 +38,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 
 const songSchema = z.object({
-  title: z.string().min(1, "Title is required"),
+  title: z.string().min(1, "Título é obrigatório"),
   artist: z.string().optional(),
   key: z.string().optional(),
   bpm: z.coerce.number().optional().nullable(),
-  tags: z.string(), // We'll split this by comma
-  youtubeUrl: z.string().url("Must be a valid URL").optional().or(z.literal('')),
+  tags: z.string(),
+  youtubeUrl: z.string().url("Deve ser uma URL válida").optional().or(z.literal('')),
   notes: z.string().optional(),
 });
 
@@ -54,14 +54,13 @@ export default function Songs() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   
-  // Use params for searching if API supports it, or filter locally. Local is fine for MVP.
   const { data: songs, isLoading } = useListSongs();
   
   const createMutation = useCreateSong({
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListSongsQueryKey() });
-        toast({ title: "Song added to library" });
+        toast({ title: "Música adicionada ao repertório" });
         setIsDialogOpen(false);
       }
     }
@@ -71,7 +70,7 @@ export default function Songs() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListSongsQueryKey() });
-        toast({ title: "Song updated" });
+        toast({ title: "Música atualizada" });
         setIsDialogOpen(false);
       }
     }
@@ -81,7 +80,7 @@ export default function Songs() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListSongsQueryKey() });
-        toast({ title: "Song removed" });
+        toast({ title: "Música removida" });
       }
     }
   });
@@ -139,41 +138,41 @@ export default function Songs() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Song Library</h1>
-          <p className="text-muted-foreground">Manage your repertoire, keys, and arrangements.</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Repertório</h1>
+          <p className="text-muted-foreground">Gerencie as músicas, tons e arranjos da equipe.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreate} className="hover-elevate shadow-md w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" /> Add Song
+              <Plus className="w-4 h-4 mr-2" /> Adicionar Música
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>{editingId ? "Edit Song" : "Add Song"}</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Música" : "Adicionar Música"}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <FormField control={form.control} name="title" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
-                    <FormControl><Input placeholder="How Great Is Our God" {...field} /></FormControl>
+                    <FormLabel>Título</FormLabel>
+                    <FormControl><Input placeholder="Quão Grande És Tu" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="artist" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Artist / Writer</FormLabel>
-                    <FormControl><Input placeholder="Chris Tomlin" {...field} /></FormControl>
+                    <FormLabel>Artista / Compositor</FormLabel>
+                    <FormControl><Input placeholder="Ministério Zoe" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="key" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Default Key</FormLabel>
-                      <FormControl><Input placeholder="e.g. C, G, Am" {...field} /></FormControl>
+                      <FormLabel>Tom Padrão</FormLabel>
+                      <FormControl><Input placeholder="ex: C, G, Am" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
@@ -189,21 +188,21 @@ export default function Songs() {
                 </div>
                 <FormField control={form.control} name="tags" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Tags (comma separated)</FormLabel>
-                    <FormControl><Input placeholder="Upbeat, Communion, Easter" {...field} /></FormControl>
+                    <FormLabel>Tags (separadas por vírgula)</FormLabel>
+                    <FormControl><Input placeholder="Louvor, Ceia, Páscoa, Adoração" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="youtubeUrl" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>YouTube URL</FormLabel>
+                    <FormLabel>Link do YouTube</FormLabel>
                     <FormControl><Input placeholder="https://youtube.com/..." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <DialogFooter className="pt-4">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending ? "Saving..." : "Save Song"}
+                    {createMutation.isPending || updateMutation.isPending ? "Salvando..." : "Salvar Música"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -215,7 +214,7 @@ export default function Songs() {
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
         <Input 
-          placeholder="Search by title or artist..." 
+          placeholder="Buscar por título ou artista..." 
           className="pl-10 h-12 text-base rounded-xl border-border/60 bg-secondary/20 focus-visible:bg-background transition-colors"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -230,8 +229,8 @@ export default function Songs() {
         ) : filteredSongs.length === 0 ? (
           <div className="col-span-full py-16 text-center border-2 border-dashed rounded-xl border-border">
             <Music className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-foreground">No songs found</h3>
-            <p className="text-muted-foreground text-sm">Adjust your search or add a new song.</p>
+            <h3 className="text-lg font-medium text-foreground">Nenhuma música encontrada</h3>
+            <p className="text-muted-foreground text-sm">Refine a busca ou adicione uma nova música.</p>
           </div>
         ) : (
           filteredSongs.map((song, index) => (
@@ -255,7 +254,7 @@ export default function Songs() {
                   <div className="flex gap-3 mb-4 mt-2">
                     {song.key && (
                       <div className="bg-secondary px-2 py-1 rounded text-xs font-semibold text-foreground">
-                        Key: {song.key}
+                        Tom: {song.key}
                       </div>
                     )}
                     {song.bpm && (
@@ -276,7 +275,7 @@ export default function Songs() {
                   <div className="flex items-center justify-between pt-4 border-t border-border/50 mt-auto">
                     {song.youtubeUrl ? (
                       <a href={song.youtubeUrl} target="_blank" rel="noreferrer" className="text-xs font-medium text-accent hover:underline flex items-center">
-                        Listen <ExternalLink className="w-3 h-3 ml-1" />
+                        Ouvir <ExternalLink className="w-3 h-3 ml-1" />
                       </a>
                     ) : <span />}
                     
@@ -289,7 +288,7 @@ export default function Songs() {
                         size="icon" 
                         className="h-8 w-8 text-muted-foreground hover:text-destructive"
                         onClick={() => {
-                          if(confirm(`Delete "${song.title}"?`)) {
+                          if(confirm(`Excluir "${song.title}"?`)) {
                             deleteMutation.mutate({ id: song.id });
                           }
                         }}

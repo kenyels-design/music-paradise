@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
 import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, Plus, ArrowRight, Clock, Trash2 } from "lucide-react";
 import { 
   useListServices, 
@@ -45,14 +46,20 @@ import {
 } from "@/components/ui/select";
 
 const serviceSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  date: z.string().min(1, "Date is required"),
+  title: z.string().min(1, "Título é obrigatório"),
+  date: z.string().min(1, "Data é obrigatória"),
   time: z.string().optional(),
   theme: z.string().optional(),
   status: z.enum(["draft", "confirmed", "completed"]),
 });
 
 type ServiceFormValues = z.infer<typeof serviceSchema>;
+
+const statusLabel: Record<string, string> = {
+  draft: "Rascunho",
+  confirmed: "Confirmado",
+  completed: "Realizado",
+};
 
 export default function Services() {
   const { toast } = useToast();
@@ -63,7 +70,7 @@ export default function Services() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListServicesQueryKey() });
-        toast({ title: "Service scheduled" });
+        toast({ title: "Culto agendado com sucesso" });
         setIsDialogOpen(false);
         form.reset();
       }
@@ -74,7 +81,7 @@ export default function Services() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListServicesQueryKey() });
-        toast({ title: "Service deleted" });
+        toast({ title: "Culto excluído" });
       }
     }
   });
@@ -84,7 +91,7 @@ export default function Services() {
   const form = useForm<ServiceFormValues>({
     resolver: zodResolver(serviceSchema),
     defaultValues: {
-      title: "Sunday Worship",
+      title: "Culto de Louvor",
       date: format(new Date(), 'yyyy-MM-dd'),
       time: "10:00",
       theme: "",
@@ -110,40 +117,40 @@ export default function Services() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Schedule</h1>
-          <p className="text-muted-foreground">Plan upcoming worship services and setlists.</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Agenda de Cultos</h1>
+          <p className="text-muted-foreground">Planeje os próximos cultos e setlists.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="hover-elevate shadow-md w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" /> Schedule Service
+              <Plus className="w-4 h-4 mr-2" /> Agendar Culto
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Schedule New Service</DialogTitle>
+              <DialogTitle>Agendar Novo Culto</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <FormField control={form.control} name="title" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Service Title</FormLabel>
-                    <FormControl><Input placeholder="Sunday Worship" {...field} /></FormControl>
+                    <FormLabel>Título do Culto</FormLabel>
+                    <FormControl><Input placeholder="Culto de Louvor" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="date" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Date</FormLabel>
+                      <FormLabel>Data</FormLabel>
                       <FormControl><Input type="date" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="time" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Time (Optional)</FormLabel>
+                      <FormLabel>Horário (Opcional)</FormLabel>
                       <FormControl><Input type="time" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
@@ -151,8 +158,8 @@ export default function Services() {
                 </div>
                 <FormField control={form.control} name="theme" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Theme / Focus (Optional)</FormLabel>
-                    <FormControl><Input placeholder="e.g. Grace, Resurrection" {...field} /></FormControl>
+                    <FormLabel>Tema / Foco (Opcional)</FormLabel>
+                    <FormControl><Input placeholder="ex: Graça, Ressurreição, Missão" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -161,12 +168,12 @@ export default function Services() {
                     <FormLabel>Status</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder="Selecionar status" /></SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="draft">Rascunho</SelectItem>
+                        <SelectItem value="confirmed">Confirmado</SelectItem>
+                        <SelectItem value="completed">Realizado</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -174,7 +181,7 @@ export default function Services() {
                 )} />
                 <DialogFooter className="pt-4">
                   <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Creating..." : "Create Service"}
+                    {createMutation.isPending ? "Agendando..." : "Agendar Culto"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -191,9 +198,9 @@ export default function Services() {
         ) : sortedServices.length === 0 ? (
           <div className="py-16 text-center border-2 border-dashed rounded-xl border-border">
             <CalendarIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-foreground">No services scheduled</h3>
-            <p className="text-muted-foreground text-sm mb-4">Create your first service to start planning.</p>
-            <Button variant="outline" onClick={() => setIsDialogOpen(true)}>Schedule Now</Button>
+            <h3 className="text-lg font-medium text-foreground">Nenhum culto agendado</h3>
+            <p className="text-muted-foreground text-sm mb-4">Crie o primeiro culto para começar o planejamento.</p>
+            <Button variant="outline" onClick={() => setIsDialogOpen(true)}>Agendar Agora</Button>
           </div>
         ) : (
           <div className="grid gap-4">
@@ -208,13 +215,13 @@ export default function Services() {
                   <CardContent className="p-0 flex flex-col sm:flex-row items-stretch">
                     <div className="bg-secondary/50 p-4 sm:w-48 flex flex-col justify-center border-b sm:border-b-0 sm:border-r border-border/50">
                       <p className="text-sm font-semibold text-primary uppercase tracking-wider">
-                        {format(parseISO(service.date), 'MMM')}
+                        {format(parseISO(service.date), 'MMM', { locale: ptBR })}
                       </p>
                       <p className="text-3xl font-display font-bold text-foreground -mt-1">
                         {format(parseISO(service.date), 'dd')}
                       </p>
                       <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {service.time || 'TBD'}
+                        <Clock className="w-3 h-3" /> {service.time || 'A definir'}
                       </p>
                     </div>
                     
@@ -224,8 +231,8 @@ export default function Services() {
                           <h3 className="text-xl font-bold text-foreground">{service.title}</h3>
                           {service.theme && <p className="text-muted-foreground mt-1">{service.theme}</p>}
                         </div>
-                        <Badge variant="outline" className={`${getStatusColor(service.status)} capitalize`}>
-                          {service.status}
+                        <Badge variant="outline" className={`${getStatusColor(service.status)}`}>
+                          {statusLabel[service.status] || service.status}
                         </Badge>
                       </div>
                     </div>
@@ -233,13 +240,13 @@ export default function Services() {
                     <div className="p-4 bg-secondary/10 flex items-center justify-end sm:justify-center border-t sm:border-t-0 sm:border-l border-border/50 gap-2">
                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={(e) => {
                         e.preventDefault();
-                        if(confirm('Delete this service?')) deleteMutation.mutate({ id: service.id });
+                        if(confirm('Excluir este culto?')) deleteMutation.mutate({ id: service.id });
                       }}>
                         <Trash2 className="w-4 h-4" />
                       </Button>
                       <Button asChild className="hover-elevate">
                         <Link href={`/services/${service.id}`}>
-                          Plan <ArrowRight className="w-4 h-4 ml-2" />
+                          Planejar <ArrowRight className="w-4 h-4 ml-2" />
                         </Link>
                       </Button>
                     </div>

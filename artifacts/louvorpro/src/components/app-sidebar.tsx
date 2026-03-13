@@ -19,11 +19,11 @@ import {
 } from "@/components/ui/sidebar";
 
 const navItems = [
-  { title: "Dashboard", url: "/", icon: Home },
-  { title: "Team", url: "/members", icon: Users },
-  { title: "Songs", url: "/songs", icon: Music },
-  { title: "Schedule", url: "/services", icon: CalendarIcon },
-  { title: "Announcements", url: "/announcements", icon: Megaphone },
+  { title: "Início", url: "/", icon: Home },
+  { title: "Equipe", url: "/members", icon: Users },
+  { title: "Músicas", url: "/songs", icon: Music },
+  { title: "Agenda", url: "/services", icon: CalendarIcon },
+  { title: "Avisos", url: "/announcements", icon: Megaphone },
 ];
 
 export function AppSidebar() {

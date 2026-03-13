@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
 import { format, parseISO } from "date-fns";
-import { Megaphone, Plus, Trash2, Star, Pin } from "lucide-react";
+import { ptBR } from "date-fns/locale";
+import { Megaphone, Plus, Trash2, Pin } from "lucide-react";
 import { 
   useListAnnouncements, 
   useCreateAnnouncement, 
@@ -28,9 +29,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 const announcementSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  body: z.string().min(5, "Body must be at least 5 characters"),
-  authorName: z.string().min(1, "Author name required"),
+  title: z.string().min(1, "Título é obrigatório"),
+  body: z.string().min(5, "Mensagem deve ter pelo menos 5 caracteres"),
+  authorName: z.string().min(1, "Nome do autor é obrigatório"),
   isPinned: z.boolean().default(false),
 });
 
@@ -45,7 +46,7 @@ export default function Announcements() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAnnouncementsQueryKey() });
-        toast({ title: "Announcement posted" });
+        toast({ title: "Aviso publicado" });
         setIsDialogOpen(false);
         form.reset();
       }
@@ -56,7 +57,7 @@ export default function Announcements() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListAnnouncementsQueryKey() });
-        toast({ title: "Announcement deleted" });
+        toast({ title: "Aviso excluído" });
       }
     }
   });
@@ -65,7 +66,7 @@ export default function Announcements() {
 
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementSchema),
-    defaultValues: { title: "", body: "", authorName: "Worship Leader", isPinned: false },
+    defaultValues: { title: "", body: "", authorName: "Líder de Louvor", isPinned: false },
   });
 
   const onSubmit = (data: AnnouncementFormValues) => {
@@ -82,39 +83,39 @@ export default function Announcements() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Announcements</h1>
-          <p className="text-muted-foreground">Keep the team informed with important updates.</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Avisos</h1>
+          <p className="text-muted-foreground">Mantenha a equipe informada com as últimas novidades.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button className="hover-elevate shadow-md w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" /> New Post
+              <Plus className="w-4 h-4 mr-2" /> Novo Aviso
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Post Announcement</DialogTitle>
+              <DialogTitle>Publicar Aviso</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <FormField control={form.control} name="title" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subject</FormLabel>
-                    <FormControl><Input placeholder="Rehearsal Time Change" {...field} /></FormControl>
+                    <FormLabel>Assunto</FormLabel>
+                    <FormControl><Input placeholder="Mudança no horário do ensaio" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="body" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Message</FormLabel>
-                    <FormControl><Textarea placeholder="Type your message here..." className="min-h-[100px]" {...field} /></FormControl>
+                    <FormLabel>Mensagem</FormLabel>
+                    <FormControl><Textarea placeholder="Digite sua mensagem aqui..." className="min-h-[100px]" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="authorName" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Posted By</FormLabel>
+                    <FormLabel>Publicado por</FormLabel>
                     <FormControl><Input {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
@@ -125,14 +126,14 @@ export default function Announcements() {
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Pin to Dashboard</FormLabel>
-                      <p className="text-sm text-muted-foreground">Keep this at the top of the team's dashboard.</p>
+                      <FormLabel>Fixar no Início</FormLabel>
+                      <p className="text-sm text-muted-foreground">Mantém este aviso no topo do painel da equipe.</p>
                     </div>
                   </FormItem>
                 )} />
                 <DialogFooter className="pt-4">
                   <Button type="submit" disabled={createMutation.isPending}>
-                    {createMutation.isPending ? "Posting..." : "Post Announcement"}
+                    {createMutation.isPending ? "Publicando..." : "Publicar Aviso"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -149,8 +150,8 @@ export default function Announcements() {
         ) : sortedAnnouncements.length === 0 ? (
           <div className="py-16 text-center border-2 border-dashed rounded-xl border-border">
             <Megaphone className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-foreground">No announcements</h3>
-            <p className="text-muted-foreground text-sm mb-4">Post an update to keep your team in the loop.</p>
+            <h3 className="text-lg font-medium text-foreground">Nenhum aviso publicado</h3>
+            <p className="text-muted-foreground text-sm mb-4">Publique um aviso para manter a equipe informada.</p>
           </div>
         ) : (
           sortedAnnouncements.map((announcement, index) => (
@@ -169,7 +170,7 @@ export default function Announcements() {
                     </CardTitle>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive -mt-2 -mr-2"
                       onClick={() => {
-                        if(confirm('Delete this announcement?')) deleteMutation.mutate({ id: announcement.id });
+                        if(confirm('Excluir este aviso?')) deleteMutation.mutate({ id: announcement.id });
                       }}
                     >
                       <Trash2 className="w-4 h-4" />
@@ -180,7 +181,7 @@ export default function Announcements() {
                   <p className="text-foreground whitespace-pre-wrap">{announcement.body}</p>
                   <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground font-medium">
                     <span>{announcement.authorName}</span>
-                    <span>{format(parseISO(announcement.createdAt), 'MMM d, yyyy • h:mm a')}</span>
+                    <span>{format(parseISO(announcement.createdAt), "d 'de' MMM 'de' yyyy • HH:mm", { locale: ptBR })}</span>
                   </div>
                 </CardContent>
               </Card>

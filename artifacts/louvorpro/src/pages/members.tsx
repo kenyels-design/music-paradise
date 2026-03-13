@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
-import { Users, Plus, Pencil, Trash2, Shield, User } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Shield } from "lucide-react";
 import { 
   useListMembers, 
   useCreateMember, 
@@ -39,10 +39,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const memberSchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Invalid email address"),
+  name: z.string().min(2, "Nome é obrigatório"),
+  email: z.string().email("E-mail inválido"),
   phone: z.string().optional(),
-  role: z.string().min(2, "Primary role is required"),
+  role: z.string().min(2, "Função é obrigatória"),
   isLeader: z.boolean().default(false),
   notes: z.string().optional(),
 });
@@ -58,11 +58,11 @@ export default function Members() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
-        toast({ title: "Member added successfully" });
+        toast({ title: "Membro adicionado com sucesso" });
         setIsDialogOpen(false);
         form.reset();
       },
-      onError: (err) => toast({ title: "Failed to add member", description: err.message, variant: "destructive" })
+      onError: (err) => toast({ title: "Erro ao adicionar membro", description: err.message, variant: "destructive" })
     }
   });
 
@@ -70,11 +70,11 @@ export default function Members() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
-        toast({ title: "Member updated successfully" });
+        toast({ title: "Membro atualizado com sucesso" });
         setIsDialogOpen(false);
         setEditingId(null);
       },
-      onError: (err) => toast({ title: "Failed to update", description: err.message, variant: "destructive" })
+      onError: (err) => toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" })
     }
   });
 
@@ -82,7 +82,7 @@ export default function Members() {
     mutation: {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
-        toast({ title: "Member removed" });
+        toast({ title: "Membro removido" });
       }
     }
   });
@@ -131,11 +131,11 @@ export default function Members() {
 
   const getRoleColor = (role: string) => {
     const roleLower = role.toLowerCase();
-    if (roleLower.includes('vocal')) return 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800/50';
-    if (roleLower.includes('guitar') || roleLower.includes('bass')) return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/50';
-    if (roleLower.includes('drum')) return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800/50';
-    if (roleLower.includes('key')) return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800/50';
-    if (roleLower.includes('sound') || roleLower.includes('tech')) return 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700/50';
+    if (roleLower.includes('vocal') || roleLower.includes('cantor')) return 'bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-900/30 dark:text-pink-300 dark:border-pink-800/50';
+    if (roleLower.includes('guitar') || roleLower.includes('violão') || roleLower.includes('guitarra') || roleLower.includes('bass') || roleLower.includes('baixo')) return 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800/50';
+    if (roleLower.includes('drum') || roleLower.includes('bateria') || roleLower.includes('percussão')) return 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-300 dark:border-orange-800/50';
+    if (roleLower.includes('key') || roleLower.includes('teclad') || roleLower.includes('piano')) return 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-300 dark:border-purple-800/50';
+    if (roleLower.includes('sound') || roleLower.includes('som') || roleLower.includes('tech') || roleLower.includes('projeção')) return 'bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800/50 dark:text-slate-300 dark:border-slate-700/50';
     return 'bg-primary/10 text-primary border-primary/20';
   };
 
@@ -143,49 +143,49 @@ export default function Members() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-display font-bold text-foreground">Team Roster</h1>
-          <p className="text-muted-foreground">Manage your worship team members and roles.</p>
+          <h1 className="text-3xl font-display font-bold text-foreground">Equipe de Louvor</h1>
+          <p className="text-muted-foreground">Gerencie os membros e funções da equipe.</p>
         </div>
         
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreate} className="hover-elevate shadow-md w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" /> Add Member
+              <Plus className="w-4 h-4 mr-2" /> Adicionar Membro
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>{editingId ? "Edit Member" : "Add Team Member"}</DialogTitle>
+              <DialogTitle>{editingId ? "Editar Membro" : "Adicionar Membro"}</DialogTitle>
             </DialogHeader>
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                 <FormField control={form.control} name="name" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
-                    <FormControl><Input placeholder="John Doe" {...field} /></FormControl>
+                    <FormLabel>Nome Completo</FormLabel>
+                    <FormControl><Input placeholder="João da Silva" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField control={form.control} name="email" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl><Input type="email" placeholder="john@example.com" {...field} /></FormControl>
+                      <FormLabel>E-mail</FormLabel>
+                      <FormControl><Input type="email" placeholder="joao@igreja.org" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                   <FormField control={form.control} name="phone" render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Phone (Optional)</FormLabel>
-                      <FormControl><Input placeholder="555-0123" {...field} /></FormControl>
+                      <FormLabel>Telefone (Opcional)</FormLabel>
+                      <FormControl><Input placeholder="(11) 99999-0000" {...field} /></FormControl>
                       <FormMessage />
                     </FormItem>
                   )} />
                 </div>
                 <FormField control={form.control} name="role" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Primary Role</FormLabel>
-                    <FormControl><Input placeholder="e.g. Vocalist, Guitarist, Sound" {...field} /></FormControl>
+                    <FormLabel>Função Principal</FormLabel>
+                    <FormControl><Input placeholder="ex: Vocalista, Guitarrista, Sonoplasta" {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
@@ -195,21 +195,21 @@ export default function Members() {
                       <Checkbox checked={field.value} onCheckedChange={field.onChange} />
                     </FormControl>
                     <div className="space-y-1 leading-none">
-                      <FormLabel>Team Leader</FormLabel>
-                      <p className="text-sm text-muted-foreground">Check this if the member can lead services.</p>
+                      <FormLabel>Líder da Equipe</FormLabel>
+                      <p className="text-sm text-muted-foreground">Marque se este membro pode liderar cultos.</p>
                     </div>
                   </FormItem>
                 )} />
                 <FormField control={form.control} name="notes" render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Notes (Optional)</FormLabel>
-                    <FormControl><Textarea placeholder="Dietary restrictions, availability, etc." {...field} /></FormControl>
+                    <FormLabel>Observações (Opcional)</FormLabel>
+                    <FormControl><Textarea placeholder="Disponibilidade, instrumentos alternativos, etc." {...field} /></FormControl>
                     <FormMessage />
                   </FormItem>
                 )} />
                 <DialogFooter className="pt-4">
                   <Button type="submit" disabled={createMutation.isPending || updateMutation.isPending}>
-                    {createMutation.isPending || updateMutation.isPending ? "Saving..." : "Save Member"}
+                    {createMutation.isPending || updateMutation.isPending ? "Salvando..." : "Salvar Membro"}
                   </Button>
                 </DialogFooter>
               </form>
@@ -226,8 +226,8 @@ export default function Members() {
         ) : members?.length === 0 ? (
           <div className="col-span-full py-12 text-center border-2 border-dashed rounded-xl border-border">
             <Users className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-foreground">No members found</h3>
-            <p className="text-muted-foreground text-sm">Add your first team member to get started.</p>
+            <h3 className="text-lg font-medium text-foreground">Nenhum membro cadastrado</h3>
+            <p className="text-muted-foreground text-sm">Adicione o primeiro membro para começar.</p>
           </div>
         ) : (
           members?.map((member, index) => (
@@ -269,7 +269,7 @@ export default function Members() {
                           size="icon" 
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
                           onClick={() => {
-                            if(confirm(`Remove ${member.name} from the team?`)) {
+                            if(confirm(`Remover ${member.name} da equipe?`)) {
                               deleteMutation.mutate({ id: member.id });
                             }
                           }}
