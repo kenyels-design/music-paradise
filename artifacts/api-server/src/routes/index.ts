@@ -7,6 +7,7 @@ import setlistsRouter from "./setlists";
 import announcementsRouter from "./announcements";
 import playlistsRouter from "./playlists";
 import absencesRouter from "./absences";
+import profilesRouter from "./profiles";
 
 const router: IRouter = Router();
 
@@ -18,5 +19,6 @@ router.use(setlistsRouter);
 router.use(announcementsRouter);
 router.use(playlistsRouter);
 router.use(absencesRouter);
+router.use(profilesRouter);
 
 export default router;

@@ -6,3 +6,4 @@ export * from "./setlist_items";
 export * from "./announcements";
 export * from "./playlists";
 export * from "./absences";
+export * from "./user_profiles";
