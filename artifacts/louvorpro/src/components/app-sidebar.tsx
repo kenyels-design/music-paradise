@@ -4,7 +4,8 @@ import {
   Users, 
   Music, 
   Calendar as CalendarIcon, 
-  Megaphone 
+  Megaphone,
+  Guitar
 } from "lucide-react";
 import {
   Sidebar,
@@ -24,6 +25,7 @@ const navItems = [
   { title: "Músicas", url: "/songs", icon: Music },
   { title: "Agenda", url: "/services", icon: CalendarIcon },
   { title: "Avisos", url: "/announcements", icon: Megaphone },
+  { title: "Afinador", url: "/tuner", icon: Guitar },
 ];
 
 export function AppSidebar() {

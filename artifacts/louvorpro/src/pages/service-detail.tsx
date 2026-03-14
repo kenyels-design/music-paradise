@@ -5,7 +5,7 @@ import { ptBR } from "date-fns/locale";
 import { 
   ArrowLeft, Calendar, Clock, Music, Users, 
   Plus, Trash2, GripVertical, Settings, ListMusic,
-  Youtube, ExternalLink, Sparkles
+  Youtube, ExternalLink, Sparkles, AlertTriangle
 } from "lucide-react";
 import { 
   useGetService, 
@@ -21,6 +21,13 @@ import {
   getListServiceAssignmentsQueryKey
 } from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+const ABSENCES_KEY = ["absences"];
+async function fetchAbsences() {
+  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
+  const res = await fetch(`${base}/api/absences`);
+  return res.json();
+}
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -81,6 +88,14 @@ export default function ServiceDetail() {
   const { data: assignments, isLoading: loadingAssignments } = useListServiceAssignments(serviceId);
   const { data: songs } = useListSongs();
   const { data: members } = useListMembers();
+  const { data: absences } = useQuery({ queryKey: ABSENCES_KEY, queryFn: fetchAbsences });
+
+  // IDs de membros ausentes na data do culto
+  const absentMemberIds = new Set(
+    (absences || [])
+      .filter((a: any) => service && a.date === service.date)
+      .map((a: any) => a.memberId)
+  );
 
   const playlistsKey = ["playlists", serviceId];
   const { data: playlists, isLoading: loadingPlaylists } = useQuery({
@@ -314,14 +329,38 @@ export default function ServiceDetail() {
               <DialogContent>
                 <DialogHeader><DialogTitle>Escalar Membro da Equipe</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-4">
+                  {absentMemberIds.size > 0 && (
+                    <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-950/20 border border-amber-600/30 text-amber-400">
+                      <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                      <p className="text-xs">Membros com ⚠ têm ausência registrada nesta data e estão indisponíveis.</p>
+                    </div>
+                  )}
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Selecionar Membro</label>
                     <Select onValueChange={setSelectedMemberId} value={selectedMemberId}>
                       <SelectTrigger><SelectValue placeholder="Escolha um membro..." /></SelectTrigger>
                       <SelectContent>
-                        {members?.map(m => <SelectItem key={m.id} value={m.id.toString()}>{m.name} ({m.role})</SelectItem>)}
+                        {members?.map(m => {
+                          const isAbsent = absentMemberIds.has(m.id);
+                          return (
+                            <SelectItem key={m.id} value={m.id.toString()}>
+                              <span className="flex items-center gap-2">
+                                {isAbsent && <AlertTriangle className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />}
+                                <span className={isAbsent ? "text-amber-400" : ""}>{m.name}</span>
+                                <span className="text-muted-foreground text-xs">({m.role})</span>
+                                {isAbsent && <span className="text-xs text-amber-400 font-medium ml-1">— Indisponível</span>}
+                              </span>
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
+                    {selectedMemberId && absentMemberIds.has(Number(selectedMemberId)) && (
+                      <p className="text-xs text-amber-400 flex items-center gap-1">
+                        <AlertTriangle className="w-3.5 h-3.5" />
+                        Este membro registrou ausência nesta data. Você ainda pode escalá-lo se necessário.
+                      </p>
+                    )}
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Função neste Culto (Opcional)</label>
