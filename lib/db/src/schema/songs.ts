@@ -1,4 +1,4 @@
-import { pgTable, serial, text, integer, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, serial, text, integer, timestamp, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
@@ -13,6 +13,7 @@ export const songsTable = pgTable("songs", {
   chordChart: text("chord_chart"),
   youtubeUrl: text("youtube_url"),
   notes: text("notes"),
+  isNew: boolean("is_new").notNull().default(false),
   lastUsedAt: timestamp("last_used_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });

@@ -4,7 +4,8 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   ArrowLeft, Calendar, Clock, Music, Users, 
-  Plus, Trash2, GripVertical, Settings 
+  Plus, Trash2, GripVertical, Settings, ListMusic,
+  Youtube, ExternalLink, Sparkles
 } from "lucide-react";
 import { 
   useGetService, 
@@ -19,7 +20,7 @@ import {
   getGetSetlistQueryKey,
   getListServiceAssignmentsQueryKey
 } from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -28,18 +29,46 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 const statusLabel: Record<string, string> = {
   draft: "Rascunho",
   confirmed: "Confirmado",
   completed: "Realizado",
 };
+
+const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+async function fetchPlaylists(serviceId: number) {
+  const res = await fetch(`${BASE}/api/services/${serviceId}/playlists`);
+  return res.json();
+}
+
+async function createPlaylist(serviceId: number, data: any) {
+  const res = await fetch(`${BASE}/api/services/${serviceId}/playlists`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  return res.json();
+}
+
+async function deletePlaylist(id: number) {
+  await fetch(`${BASE}/api/playlists/${id}`, { method: "DELETE" });
+}
+
+type SpotifyIcon = React.FC<{ className?: string }>;
+const SpotifyIcon: SpotifyIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+  </svg>
+);
 
 export default function ServiceDetail() {
   const { id } = useParams();
@@ -53,8 +82,31 @@ export default function ServiceDetail() {
   const { data: songs } = useListSongs();
   const { data: members } = useListMembers();
 
+  const playlistsKey = ["playlists", serviceId];
+  const { data: playlists, isLoading: loadingPlaylists } = useQuery({
+    queryKey: playlistsKey,
+    queryFn: () => fetchPlaylists(serviceId),
+  });
+
+  const createPlaylistMutation = useMutation({
+    mutationFn: (data: any) => createPlaylist(serviceId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: playlistsKey });
+      toast({ title: "Playlist adicionada" });
+      setAddPlaylistOpen(false);
+      setPlaylistForm({ name: "", notes: "", spotifyUrl: "", youtubeUrl: "" });
+    },
+  });
+
+  const deletePlaylistMutation = useMutation({
+    mutationFn: (id: number) => deletePlaylist(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: playlistsKey }),
+  });
+
   const [addSongOpen, setAddSongOpen] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
+  const [addPlaylistOpen, setAddPlaylistOpen] = useState(false);
+  const [playlistForm, setPlaylistForm] = useState({ name: "", notes: "", spotifyUrl: "", youtubeUrl: "" });
 
   const addSongMutation = useAddToSetlist({
     mutation: {
@@ -90,7 +142,6 @@ export default function ServiceDetail() {
 
   const [selectedSongId, setSelectedSongId] = useState("");
   const [songKeyOverride, setSongKeyOverride] = useState("");
-  
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [memberRoleOverride, setMemberRoleOverride] = useState("");
 
@@ -117,11 +168,18 @@ export default function ServiceDetail() {
     });
   };
 
+  const handleAddPlaylist = () => {
+    if (!playlistForm.name.trim()) return;
+    createPlaylistMutation.mutate(playlistForm);
+  };
+
   if (loadingService) {
     return <div className="space-y-4"><Skeleton className="h-10 w-32"/><Skeleton className="h-64 w-full"/></div>;
   }
 
   if (!service) return <div>Culto não encontrado</div>;
+
+  const songMap = new Map(songs?.map(s => [s.id, s]) || []);
 
   return (
     <div className="space-y-6 pb-20">
@@ -147,11 +205,13 @@ export default function ServiceDetail() {
       </div>
 
       <Tabs defaultValue="setlist" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
+        <TabsList className="grid w-full grid-cols-3 max-w-lg">
           <TabsTrigger value="setlist" className="flex items-center gap-2"><Music className="w-4 h-4"/> Setlist</TabsTrigger>
           <TabsTrigger value="team" className="flex items-center gap-2"><Users className="w-4 h-4"/> Equipe</TabsTrigger>
+          <TabsTrigger value="playlists" className="flex items-center gap-2"><ListMusic className="w-4 h-4"/> Playlists</TabsTrigger>
         </TabsList>
         
+        {/* ─── SETLIST ─── */}
         <TabsContent value="setlist" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-foreground">Músicas ({setlist?.length || 0})</h3>
@@ -167,7 +227,14 @@ export default function ServiceDetail() {
                     <Select onValueChange={setSelectedSongId} value={selectedSongId}>
                       <SelectTrigger><SelectValue placeholder="Escolha uma música..." /></SelectTrigger>
                       <SelectContent>
-                        {songs?.map(s => <SelectItem key={s.id} value={s.id.toString()}>{s.title} {s.key ? `(Tom: ${s.key})` : ''}</SelectItem>)}
+                        {songs?.map(s => (
+                          <SelectItem key={s.id} value={s.id.toString()}>
+                            <span className="flex items-center gap-2">
+                              {(s as any).isNew && <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                              {s.title} {s.key ? `(Tom: ${s.key})` : ''}
+                            </span>
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -189,42 +256,54 @@ export default function ServiceDetail() {
               {loadingSetlist ? (
                 <div className="p-6 text-center text-muted-foreground">Carregando...</div>
               ) : setlist?.length === 0 ? (
-                <div className="p-8 text-center text-muted-foreground border-b last:border-0 border-border/50">
+                <div className="p-8 text-center text-muted-foreground">
                   Nenhuma música adicionada ainda.
                 </div>
               ) : (
                 <div className="divide-y divide-border/50">
-                  {setlist?.sort((a,b)=>a.order - b.order).map((item, i) => (
-                    <div key={item.id} className="p-4 flex items-center justify-between hover:bg-secondary/30 transition-colors group">
-                      <div className="flex items-center gap-4">
-                        <div className="text-muted-foreground/30 px-2 py-4">
-                          <GripVertical className="w-5 h-5" />
+                  {setlist?.sort((a,b)=>a.order - b.order).map((item, i) => {
+                    const songData = songMap.get(item.song?.id || 0) || item.song;
+                    const isNew = (songData as any)?.isNew;
+                    return (
+                      <div key={item.id} className={`p-4 flex items-center justify-between transition-colors group ${isNew ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-secondary/30'}`}>
+                        <div className="flex items-center gap-4">
+                          <div className="text-muted-foreground/30 px-2 py-4">
+                            <GripVertical className="w-5 h-5" />
+                          </div>
+                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+                            {i + 1}
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-foreground flex items-center gap-2">
+                              {item.song.title}
+                              {isNew && (
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 rounded-full px-2 py-0.5">
+                                  <Sparkles className="w-2.5 h-2.5" /> Nova
+                                </span>
+                              )}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">
+                              {item.song.artist} 
+                              {(item.keyOverride || item.song.key) && ` • Tom: ${item.keyOverride || item.song.key}`}
+                              {item.song.bpm && ` • ${item.song.bpm} BPM`}
+                            </p>
+                          </div>
                         </div>
-                        <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                          {i + 1}
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-foreground">{item.song.title}</h4>
-                          <p className="text-sm text-muted-foreground">
-                            {item.song.artist} 
-                            {(item.keyOverride || item.song.key) && ` • Tom: ${item.keyOverride || item.song.key}`}
-                            {item.song.bpm && ` • ${item.song.bpm} BPM`}
-                          </p>
-                        </div>
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
+                          onClick={() => removeSongMutation.mutate({ id: serviceId, itemId: item.id })}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
                       </div>
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
-                        onClick={() => removeSongMutation.mutate({ id: serviceId, itemId: item.id })}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
           </Card>
         </TabsContent>
 
+        {/* ─── EQUIPE ─── */}
         <TabsContent value="team" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-foreground">Equipe Escalada ({assignments?.length || 0})</h3>
@@ -246,7 +325,7 @@ export default function ServiceDetail() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium">Função neste Culto (Opcional)</label>
-                    <Input placeholder="ex: Vocal Principal em vez de apenas Vocal" value={memberRoleOverride} onChange={e => setMemberRoleOverride(e.target.value)} />
+                    <Input placeholder="ex: Vocal Principal" value={memberRoleOverride} onChange={e => setMemberRoleOverride(e.target.value)} />
                   </div>
                   <Button className="w-full" onClick={handleAddMember} disabled={!selectedMemberId || addMemberMutation.isPending}>
                     {addMemberMutation.isPending ? "Escalando..." : "Escalar para o Culto"}
@@ -286,6 +365,133 @@ export default function ServiceDetail() {
               ))
             )}
           </div>
+        </TabsContent>
+
+        {/* ─── PLAYLISTS ─── */}
+        <TabsContent value="playlists" className="mt-6 space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-foreground">Playlists ({playlists?.length || 0})</h3>
+            <Dialog open={addPlaylistOpen} onOpenChange={setAddPlaylistOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm"><Plus className="w-4 h-4 mr-1"/> Adicionar Playlist</Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-[500px]">
+                <DialogHeader><DialogTitle>Nova Playlist</DialogTitle></DialogHeader>
+                <div className="space-y-4 pt-4">
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Nome do Evento / Playlist</label>
+                    <Input 
+                      placeholder="ex: Culto de Páscoa 2026" 
+                      value={playlistForm.name} 
+                      onChange={e => setPlaylistForm(f => ({ ...f, name: e.target.value }))} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium">Observações (Opcional)</label>
+                    <Textarea 
+                      placeholder="Informações sobre a playlist, ordem das músicas, etc." 
+                      className="min-h-[80px]"
+                      value={playlistForm.notes} 
+                      onChange={e => setPlaylistForm(f => ({ ...f, notes: e.target.value }))} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <SpotifyIcon className="w-4 h-4 text-green-400" /> Link do Spotify
+                    </label>
+                    <Input 
+                      placeholder="https://open.spotify.com/playlist/..." 
+                      value={playlistForm.spotifyUrl} 
+                      onChange={e => setPlaylistForm(f => ({ ...f, spotifyUrl: e.target.value }))} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-2">
+                      <Youtube className="w-4 h-4 text-red-400" /> Link do YouTube
+                    </label>
+                    <Input 
+                      placeholder="https://youtube.com/playlist?list=..." 
+                      value={playlistForm.youtubeUrl} 
+                      onChange={e => setPlaylistForm(f => ({ ...f, youtubeUrl: e.target.value }))} 
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button 
+                      className="w-full" 
+                      onClick={handleAddPlaylist} 
+                      disabled={!playlistForm.name.trim() || createPlaylistMutation.isPending}
+                    >
+                      {createPlaylistMutation.isPending ? "Salvando..." : "Salvar Playlist"}
+                    </Button>
+                  </DialogFooter>
+                </div>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          {loadingPlaylists ? (
+            <div className="space-y-3">
+              <Skeleton className="h-24 w-full rounded-xl" />
+              <Skeleton className="h-24 w-full rounded-xl" />
+            </div>
+          ) : playlists?.length === 0 ? (
+            <div className="py-12 text-center border-2 border-dashed rounded-xl border-border">
+              <ListMusic className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+              <p className="text-muted-foreground font-medium">Nenhuma playlist adicionada.</p>
+              <p className="text-muted-foreground/70 text-sm mt-1">Adicione playlists do Spotify ou YouTube para este culto.</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {playlists?.map((playlist: any) => (
+                <Card key={playlist.id} className="border-border/50">
+                  <CardContent className="p-5">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-semibold text-foreground text-base mb-1">{playlist.name}</h4>
+                        {playlist.notes && (
+                          <p className="text-sm text-muted-foreground mb-3 whitespace-pre-wrap">{playlist.notes}</p>
+                        )}
+                        <div className="flex flex-wrap gap-3 mt-2">
+                          {playlist.spotifyUrl && (
+                            <a 
+                              href={playlist.spotifyUrl} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-green-400 bg-green-400/10 border border-green-400/20 rounded-full px-3 py-1.5 hover:bg-green-400/20 transition-colors"
+                            >
+                              <SpotifyIcon className="w-3.5 h-3.5" />
+                              Abrir no Spotify
+                              <ExternalLink className="w-3 h-3 ml-0.5" />
+                            </a>
+                          )}
+                          {playlist.youtubeUrl && (
+                            <a 
+                              href={playlist.youtubeUrl} 
+                              target="_blank" 
+                              rel="noreferrer"
+                              className="inline-flex items-center gap-1.5 text-xs font-semibold text-red-400 bg-red-400/10 border border-red-400/20 rounded-full px-3 py-1.5 hover:bg-red-400/20 transition-colors"
+                            >
+                              <Youtube className="w-3.5 h-3.5" />
+                              Abrir no YouTube
+                              <ExternalLink className="w-3 h-3 ml-0.5" />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                        onClick={() => deletePlaylistMutation.mutate(playlist.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </TabsContent>
       </Tabs>
     </div>

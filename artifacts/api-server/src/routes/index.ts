@@ -5,6 +5,7 @@ import songsRouter from "./songs";
 import servicesRouter from "./services";
 import setlistsRouter from "./setlists";
 import announcementsRouter from "./announcements";
+import playlistsRouter from "./playlists";
 
 const router: IRouter = Router();
 
@@ -14,5 +15,6 @@ router.use(songsRouter);
 router.use(servicesRouter);
 router.use(setlistsRouter);
 router.use(announcementsRouter);
+router.use(playlistsRouter);
 
 export default router;
