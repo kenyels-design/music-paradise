@@ -1,18 +1,30 @@
 import { Router, type IRouter } from "express";
-import { db, userProfilesTable, insertUserProfileSchema } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { supabaseAdmin, type UserStatus, type UserProfile } from "../lib/supabase";
 
 const router: IRouter = Router();
+
+function toClientProfile(p: UserProfile) {
+  return {
+    id: p.id,
+    email: p.email,
+    name: p.name,
+    status: p.status,
+    isAdmin: String(p.is_admin),
+    createdAt: p.created_at,
+  };
+}
 
 router.get("/profiles/:id", async (req, res) => {
   try {
     const { id } = req.params;
-    const [profile] = await db
-      .select()
-      .from(userProfilesTable)
-      .where(eq(userProfilesTable.id, id));
-    if (!profile) return res.status(404).json({ error: "Perfil não encontrado" });
-    return res.json(profile);
+    const { data, error } = await supabaseAdmin
+      .from("user_profiles")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: "Perfil não encontrado" });
+    return res.json(toClientProfile(data as UserProfile));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro interno do servidor" });
@@ -21,21 +33,30 @@ router.get("/profiles/:id", async (req, res) => {
 
 router.post("/profiles", async (req, res) => {
   try {
-    const parsed = insertUserProfileSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ error: parsed.error.flatten() });
+    const { id, email, name } = req.body as { id: string; email: string; name: string };
+    if (!id || !email || !name) {
+      return res.status(400).json({ error: "id, email e name são obrigatórios" });
+    }
 
-    const existing = await db
+    const { data: existing } = await supabaseAdmin
+      .from("user_profiles")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (existing) return res.json(toClientProfile(existing as UserProfile));
+
+    const { data, error } = await supabaseAdmin
+      .from("user_profiles")
+      .insert({ id, email, name, status: "pendente", is_admin: false })
       .select()
-      .from(userProfilesTable)
-      .where(eq(userProfilesTable.id, parsed.data.id));
+      .single();
 
-    if (existing.length > 0) return res.json(existing[0]);
-
-    const [profile] = await db
-      .insert(userProfilesTable)
-      .values({ ...parsed.data, status: "pendente" })
-      .returning();
-    return res.status(201).json(profile);
+    if (error) {
+      console.error("Supabase insert error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+    return res.status(201).json(toClientProfile(data as UserProfile));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro interno do servidor" });
@@ -45,17 +66,21 @@ router.post("/profiles", async (req, res) => {
 router.patch("/profiles/:id/status", async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body as { status: "pendente" | "aprovado" | "rejeitado" };
+    const { status } = req.body as { status: UserStatus };
+
     if (!["pendente", "aprovado", "rejeitado"].includes(status)) {
       return res.status(400).json({ error: "Status inválido" });
     }
-    const [updated] = await db
-      .update(userProfilesTable)
-      .set({ status })
-      .where(eq(userProfilesTable.id, id))
-      .returning();
-    if (!updated) return res.status(404).json({ error: "Perfil não encontrado" });
-    return res.json(updated);
+
+    const { data, error } = await supabaseAdmin
+      .from("user_profiles")
+      .update({ status })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error || !data) return res.status(404).json({ error: "Perfil não encontrado" });
+    return res.json(toClientProfile(data as UserProfile));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro interno do servidor" });
@@ -64,8 +89,16 @@ router.patch("/profiles/:id/status", async (req, res) => {
 
 router.get("/profiles", async (req, res) => {
   try {
-    const profiles = await db.select().from(userProfilesTable).orderBy(userProfilesTable.createdAt);
-    return res.json(profiles);
+    const { data, error } = await supabaseAdmin
+      .from("user_profiles")
+      .select("*")
+      .order("created_at", { ascending: true });
+
+    if (error) {
+      console.error("Supabase select error:", error);
+      return res.status(500).json({ error: error.message });
+    }
+    return res.json((data as UserProfile[]).map(toClientProfile));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro interno do servidor" });
