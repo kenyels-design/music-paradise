@@ -7,11 +7,20 @@ import {
   insertServiceAssignmentSchema,
   membersTable,
 } from "@workspace/db";
-import { eq, gte } from "drizzle-orm";
+import { eq, gte, lt, and, ne } from "drizzle-orm";
 
 const router: IRouter = Router();
 
 router.get("/services", async (req, res) => {
+  // Auto-mark past services (date < today) as completed
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split("T")[0];
+  await db
+    .update(servicesTable)
+    .set({ status: "completed" })
+    .where(and(lt(servicesTable.date, yesterdayStr), ne(servicesTable.status, "completed")));
+
   const { upcoming } = req.query as { upcoming?: string };
   let query = db.select().from(servicesTable).$dynamic();
 

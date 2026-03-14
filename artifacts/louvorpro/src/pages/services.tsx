@@ -64,7 +64,7 @@ const serviceSchema = z.object({
 type ServiceFormValues = z.infer<typeof serviceSchema>;
 
 const statusLabel: Record<string, string> = {
-  draft: "Rascunho",
+  draft: "Agendado",
   confirmed: "Confirmado",
   completed: "Realizado",
 };
@@ -311,7 +311,7 @@ export default function Services() {
                           <SelectTrigger><SelectValue placeholder="Selecionar status" /></SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="draft">Rascunho</SelectItem>
+                          <SelectItem value="draft">Agendado</SelectItem>
                           <SelectItem value="confirmed">Confirmado</SelectItem>
                           <SelectItem value="completed">Realizado</SelectItem>
                         </SelectContent>

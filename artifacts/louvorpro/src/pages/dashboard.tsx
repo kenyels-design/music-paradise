@@ -115,7 +115,7 @@ export default function Dashboard() {
   };
 
   const statusLabel: Record<string, string> = {
-    draft: "Rascunho",
+    draft: "Agendado",
     confirmed: "Confirmado",
     completed: "Realizado",
   };
@@ -249,15 +249,15 @@ export default function Dashboard() {
         </motion.div>
 
         <motion.div variants={itemVariants}>
-          <Card className="border-accent/20 bg-accent/5 shadow-sm hover:shadow-md transition-all duration-300">
+          <Card className="border-yellow-500/30 bg-yellow-500/10 shadow-sm hover:shadow-md transition-all duration-300">
             <CardContent className="p-6 flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-accent-foreground/80 mb-1">Avisos Fixados</p>
+                <p className="text-sm font-medium text-yellow-300 mb-1">Avisos Fixados</p>
                 {loadingAnnouncements ? <Skeleton className="h-8 w-16" /> : (
-                  <h3 className="text-2xl font-bold text-accent-foreground">{pinnedAnnouncements.length}</h3>
+                  <h3 className="text-2xl font-bold text-yellow-100">{pinnedAnnouncements.length}</h3>
                 )}
               </div>
-              <div className="w-12 h-12 rounded-xl bg-accent/20 flex items-center justify-center text-accent-foreground">
+              <div className="w-12 h-12 rounded-xl bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center text-yellow-300">
                 <Megaphone className="w-6 h-6" />
               </div>
             </CardContent>
@@ -330,8 +330,8 @@ export default function Dashboard() {
           <Card className="h-full border-border/50 shadow-md">
             <CardHeader className="pb-4">
               <CardTitle className="text-xl flex items-center gap-2">
-                <Star className="w-5 h-5 text-accent" fill="currentColor" />
-                Avisos Fixados
+                <Star className="w-5 h-5 text-yellow-400" fill="currentColor" />
+                <span className="text-foreground">Avisos Fixados</span>
               </CardTitle>
             </CardHeader>
             <CardContent>

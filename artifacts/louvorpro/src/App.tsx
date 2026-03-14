@@ -10,7 +10,6 @@ import Songs from "./pages/songs";
 import Services from "./pages/services";
 import ServiceDetail from "./pages/service-detail";
 import Announcements from "./pages/announcements";
-import Tuner from "./pages/tuner";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -32,7 +31,6 @@ function Router() {
         <Route path="/services" component={Services} />
         <Route path="/services/:id" component={ServiceDetail} />
         <Route path="/announcements" component={Announcements} />
-        <Route path="/tuner" component={Tuner} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

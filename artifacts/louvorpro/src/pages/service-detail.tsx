@@ -45,7 +45,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 const statusLabel: Record<string, string> = {
-  draft: "Rascunho",
+  draft: "Agendado",
   confirmed: "Confirmado",
   completed: "Realizado",
 };

@@ -41,7 +41,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 const memberSchema = z.object({
   name: z.string().min(2, "Nome é obrigatório"),
   email: z.string().email("E-mail inválido"),
-  phone: z.string().optional(),
   role: z.string().min(2, "Função é obrigatória"),
   isLeader: z.boolean().default(false),
   notes: z.string().optional(),
@@ -95,7 +94,6 @@ export default function Members() {
     defaultValues: {
       name: "",
       email: "",
-      phone: "",
       role: "",
       isLeader: false,
       notes: "",
@@ -106,7 +104,6 @@ export default function Members() {
     form.reset({
       name: member.name,
       email: member.email,
-      phone: member.phone || "",
       role: member.role,
       isLeader: member.isLeader,
       notes: member.notes || "",
@@ -116,7 +113,7 @@ export default function Members() {
   };
 
   const openCreate = () => {
-    form.reset({ name: "", email: "", phone: "", role: "", isLeader: false, notes: "" });
+    form.reset({ name: "", email: "", role: "", isLeader: false, notes: "" });
     setEditingId(null);
     setIsDialogOpen(true);
   };
@@ -153,7 +150,7 @@ export default function Members() {
               <Plus className="w-4 h-4 mr-2" /> Adicionar Membro
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Membro" : "Adicionar Membro"}</DialogTitle>
             </DialogHeader>
@@ -166,22 +163,13 @@ export default function Members() {
                     <FormMessage />
                   </FormItem>
                 )} />
-                <div className="grid grid-cols-2 gap-4">
-                  <FormField control={form.control} name="email" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>E-mail</FormLabel>
-                      <FormControl><Input type="email" placeholder="joao@igreja.org" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                  <FormField control={form.control} name="phone" render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Telefone (Opcional)</FormLabel>
-                      <FormControl><Input placeholder="(11) 99999-0000" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )} />
-                </div>
+                <FormField control={form.control} name="email" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>E-mail</FormLabel>
+                    <FormControl><Input type="email" placeholder="joao@igreja.org" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <FormField control={form.control} name="role" render={({ field }) => (
                   <FormItem>
                     <FormLabel>Função Principal</FormLabel>

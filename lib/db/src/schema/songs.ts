@@ -14,6 +14,8 @@ export const songsTable = pgTable("songs", {
   youtubeUrl: text("youtube_url"),
   notes: text("notes"),
   isNew: boolean("is_new").notNull().default(false),
+  hasBrass: boolean("has_brass").notNull().default(false),
+  cifraClubUrl: text("cifra_club_url"),
   lastUsedAt: timestamp("last_used_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
