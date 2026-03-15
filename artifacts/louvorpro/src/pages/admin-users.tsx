@@ -42,7 +42,10 @@ async function updateStatus(id: string, status: UserStatus): Promise<UserProfile
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ status }),
   });
-  if (!res.ok) throw new Error("Erro ao atualizar status");
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body?.error ?? "Erro ao atualizar status");
+  }
   return res.json();
 }
 
@@ -83,8 +86,8 @@ export default function AdminUsers() {
       toast({ title: `Status atualizado`, description: `${updated.name} agora está como "${cfg.label}".` });
       setActionTarget(null);
     },
-    onError: () => {
-      toast({ title: "Erro", description: "Não foi possível atualizar o status.", variant: "destructive" });
+    onError: (err: Error) => {
+      toast({ title: "Erro ao aprovar", description: err.message, variant: "destructive" });
     },
   });
 

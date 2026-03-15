@@ -72,17 +72,19 @@ router.patch("/profiles/:id/status", async (req, res) => {
       return res.status(400).json({ error: "Status inválido" });
     }
 
-    const { data, error } = await supabaseAdmin
+    const { data: currentProfile, error: fetchError } = await supabaseAdmin
       .from("user_profiles")
-      .update({ status })
+      .select("*")
       .eq("id", id)
-      .select()
       .single();
 
-    if (error || !data) return res.status(404).json({ error: "Perfil não encontrado" });
+    if (fetchError || !currentProfile) {
+      return res.status(404).json({ error: "Perfil não encontrado" });
+    }
 
     if (status === "aprovado") {
-      const profile = data as UserProfile;
+      const profile = currentProfile as UserProfile;
+
       const { data: existingMember } = await supabaseAdmin
         .from("members")
         .select("id")
@@ -90,16 +92,34 @@ router.patch("/profiles/:id/status", async (req, res) => {
         .maybeSingle();
 
       if (!existingMember) {
-        await supabaseAdmin.from("members").insert({
+        const { error: insertError } = await supabaseAdmin.from("members").insert({
           name: profile.name,
           email: profile.email,
-          role: "Membro",
+          role: "A Definir",
           is_leader: false,
         });
+
+        if (insertError) {
+          console.error("Erro ao inserir membro:", insertError);
+          return res.status(500).json({
+            error: `Não foi possível criar o membro: ${insertError.message}. Status não alterado.`,
+          });
+        }
       }
     }
 
-    return res.json(toClientProfile(data as UserProfile));
+    const { data: updated, error: updateError } = await supabaseAdmin
+      .from("user_profiles")
+      .update({ status })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (updateError || !updated) {
+      return res.status(500).json({ error: "Erro ao atualizar status do perfil" });
+    }
+
+    return res.json(toClientProfile(updated as UserProfile));
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: "Erro interno do servidor" });
