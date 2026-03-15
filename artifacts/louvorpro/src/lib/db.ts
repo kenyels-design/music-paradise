@@ -28,9 +28,23 @@ export interface SetlistItem {
   song: Song;
 }
 
+export type AssignmentStatus = 'pendente' | 'confirmado' | 'recusado';
+
 export interface ServiceAssignment {
   id: number; serviceId: number; memberId: number; role: string | null;
+  status: AssignmentStatus;
   member: Member;
+}
+
+export interface MyAssignment {
+  id: number;
+  serviceId: number;
+  serviceTitle: string;
+  serviceDate: string;
+  serviceTime: string | null;
+  serviceTheme: string | null;
+  assignmentRole: string | null;
+  status: AssignmentStatus;
 }
 
 export interface Announcement {
@@ -78,7 +92,8 @@ const mapSetlistItem = (item: any): SetlistItem => ({
 
 const mapAssignment = (a: any): ServiceAssignment => ({
   id: a.id, serviceId: a.service_id, memberId: a.member_id,
-  role: a.role, member: mapMember(a.member),
+  role: a.role, status: (a.status || 'pendente') as AssignmentStatus,
+  member: mapMember(a.member),
 });
 
 const mapAnnouncement = (a: any): Announcement => ({
@@ -263,6 +278,46 @@ export async function createServiceAssignment(input: {
 export async function deleteServiceAssignment(id: number): Promise<void> {
   const { error } = await supabase.from("service_assignments").delete().eq("id", id);
   if (error) raise(error);
+}
+
+export async function updateAssignmentStatus(assignmentId: number, status: AssignmentStatus): Promise<void> {
+  const { error } = await supabase
+    .from("service_assignments")
+    .update({ status })
+    .eq("id", assignmentId);
+  if (error) raise(error);
+}
+
+export async function listMyPendingAssignments(memberEmail: string): Promise<MyAssignment[]> {
+  const { data: memberData } = await supabase
+    .from("members")
+    .select("id")
+    .eq("email", memberEmail)
+    .maybeSingle();
+
+  if (!memberData) return [];
+
+  const { data, error } = await supabase
+    .from("service_assignments")
+    .select("*, service:services(*)")
+    .eq("member_id", (memberData as any).id)
+    .eq("status", "pendente");
+
+  if (error) raise(error);
+
+  const today = new Date().toISOString().split("T")[0];
+  return ((data || []) as any[])
+    .filter(a => a.service && a.service.date >= today)
+    .map(a => ({
+      id: a.id,
+      serviceId: a.service_id,
+      serviceTitle: a.service.title,
+      serviceDate: a.service.date,
+      serviceTime: a.service.time,
+      serviceTheme: a.service.theme,
+      assignmentRole: a.role,
+      status: (a.status || 'pendente') as AssignmentStatus,
+    }));
 }
 
 // ─── ANNOUNCEMENTS ─────────────────────────────────────────────────────────

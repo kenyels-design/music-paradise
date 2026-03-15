@@ -7,7 +7,7 @@ import { format, isAfter, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { 
   Calendar, Users, Music, Megaphone, ArrowRight, Clock, Star, 
-  AlertCircle, Plus, Trash2, UserX
+  AlertCircle, Plus, Trash2, UserX, CheckCircle2, XCircle, BellRing
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,16 +22,42 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/auth-context";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { profile } = useAuth();
 
   const { data: services, isLoading: loadingServices } = useQuery({ queryKey: ["services"], queryFn: db.listServices });
   const { data: members, isLoading: loadingMembers } = useQuery({ queryKey: ["members"], queryFn: db.listMembers });
   const { data: songs, isLoading: loadingSongs } = useQuery({ queryKey: ["songs"], queryFn: db.listSongs });
   const { data: announcements, isLoading: loadingAnnouncements } = useQuery({ queryKey: ["announcements"], queryFn: db.listAnnouncements });
   const { data: absences, isLoading: loadingAbsences } = useQuery({ queryKey: ["absences"], queryFn: db.listAbsences });
+
+  const myEmail = profile?.email ?? "";
+  const { data: myPendingAssignments = [], isLoading: loadingMyAssignments } = useQuery({
+    queryKey: ["myAssignments", myEmail],
+    queryFn: () => db.listMyPendingAssignments(myEmail),
+    enabled: !!myEmail,
+  });
+
+  const confirmAssignmentMutation = useMutation({
+    mutationFn: ({ id, status }: { id: number; status: db.AssignmentStatus }) =>
+      db.updateAssignmentStatus(id, status),
+    onSuccess: (_, { status }) => {
+      queryClient.invalidateQueries({ queryKey: ["myAssignments", myEmail] });
+      toast({
+        title: status === "confirmado" ? "Presença confirmada!" : "Escala recusada",
+        description: status === "confirmado"
+          ? "Sua presença foi confirmada para o culto."
+          : "O líder será notificado sobre sua recusa.",
+      });
+    },
+    onError: () => {
+      toast({ title: "Erro", description: "Não foi possível atualizar sua resposta.", variant: "destructive" });
+    },
+  });
 
   const memberMap = new Map((members || []).map(m => [m.id, m]));
 
@@ -237,6 +263,72 @@ export default function Dashboard() {
           </Card>
         </motion.div>
       </div>
+
+      {/* ─── Minhas Escalas Pendentes ─── */}
+      {(loadingMyAssignments || myPendingAssignments.length > 0) && (
+        <motion.div variants={itemVariants}>
+          <Card className="border-primary/20 bg-primary/5">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <BellRing className="w-4 h-4 text-primary" />
+                Minhas Escalas Pendentes
+                {myPendingAssignments.length > 0 && (
+                  <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                    {myPendingAssignments.length}
+                  </span>
+                )}
+              </CardTitle>
+              <CardDescription>Confirme ou recuse sua participação nos cultos abaixo</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {loadingMyAssignments ? (
+                <div className="space-y-2">
+                  <Skeleton className="h-16 w-full rounded-xl" />
+                  <Skeleton className="h-16 w-full rounded-xl" />
+                </div>
+              ) : (
+                myPendingAssignments.map(a => (
+                  <div
+                    key={a.id}
+                    className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-card border border-border/60"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground text-sm">{a.serviceTitle}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                        <Calendar className="w-3.5 h-3.5" />
+                        {format(parseISO(a.serviceDate), "EEEE, d 'de' MMMM", { locale: ptBR })}
+                        {a.serviceTime && ` · ${a.serviceTime}`}
+                      </p>
+                      {a.assignmentRole && (
+                        <p className="text-xs text-primary font-medium mt-0.5">Função: {a.assignmentRole}</p>
+                      )}
+                    </div>
+                    <div className="flex gap-2 flex-shrink-0">
+                      <Button
+                        size="sm"
+                        disabled={confirmAssignmentMutation.isPending}
+                        className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white border-0"
+                        onClick={() => confirmAssignmentMutation.mutate({ id: a.id, status: "confirmado" })}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Confirmar
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={confirmAssignmentMutation.isPending}
+                        className="h-8 text-xs border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                        onClick={() => confirmAssignmentMutation.mutate({ id: a.id, status: "recusado" })}
+                      >
+                        <XCircle className="w-3.5 h-3.5 mr-1" /> Recusar
+                      </Button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Próximo culto */}

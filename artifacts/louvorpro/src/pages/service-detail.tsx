@@ -5,7 +5,8 @@ import { ptBR } from "date-fns/locale";
 import { 
   ArrowLeft, Calendar, Clock, Music, Users, 
   Plus, Trash2, GripVertical, Settings, ListMusic,
-  Youtube, ExternalLink, Sparkles, AlertTriangle
+  Youtube, ExternalLink, Sparkles, AlertTriangle,
+  CheckCircle2, XCircle, HelpCircle
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
@@ -30,6 +31,12 @@ const statusLabel: Record<string, string> = {
   draft: "Agendado",
   confirmed: "Confirmado",
   completed: "Realizado",
+};
+
+const assignmentStatusCfg: Record<db.AssignmentStatus, { label: string; icon: React.ReactNode; cls: string }> = {
+  pendente:   { label: "Aguardando", icon: <HelpCircle className="w-3 h-3" />,    cls: "bg-yellow-500/15 text-yellow-400 border-yellow-500/30" },
+  confirmado: { label: "Confirmado", icon: <CheckCircle2 className="w-3 h-3" />,  cls: "bg-green-500/15  text-green-400  border-green-500/30"  },
+  recusado:   { label: "Recusado",   icon: <XCircle className="w-3 h-3" />,       cls: "bg-red-500/15    text-red-400    border-red-500/30"    },
 };
 
 type SpotifyIcon = React.FC<{ className?: string }>;
@@ -353,28 +360,33 @@ export default function ServiceDetail() {
                 <p className="text-muted-foreground">Nenhum membro escalado ainda.</p>
               </div>
             ) : (
-              assignments?.map(assignment => (
-                <Card key={assignment.id} className="border-border/50">
-                  <CardContent className="p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold">
+              assignments?.map(assignment => {
+                const asCfg = assignmentStatusCfg[assignment.status] ?? assignmentStatusCfg.pendente;
+                return (
+                  <Card key={assignment.id} className="border-border/50">
+                    <CardContent className="p-4 flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center font-bold flex-shrink-0">
                         {assignment.member.name.charAt(0)}
                       </div>
-                      <div>
-                        <p className="font-semibold text-foreground">{assignment.member.name}</p>
-                        <p className="text-sm text-primary font-medium">{assignment.role || assignment.member.role}</p>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-foreground truncate">{assignment.member.name}</p>
+                        <p className="text-sm text-primary font-medium truncate">{assignment.role || assignment.member.role}</p>
                       </div>
-                    </div>
-                    {isAdmin && (
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"
-                        onClick={() => removeMemberMutation.mutate(assignment.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded-full border text-[11px] font-semibold flex-shrink-0 ${asCfg.cls}`}>
+                        {asCfg.icon}
+                        <span>{asCfg.label}</span>
+                      </div>
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                          onClick={() => removeMemberMutation.mutate(assignment.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
             )}
           </div>
         </TabsContent>
