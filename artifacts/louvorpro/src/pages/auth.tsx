@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Music2, LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus } from "lucide-react";
 
 type Tab = "login" | "cadastro";
 
@@ -59,10 +59,7 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-primary/10 border border-primary/30 mb-4">
-            <Music2 className="w-8 h-8 text-primary" />
-          </div>
-          <h1 className="text-3xl font-bold text-foreground tracking-tight">LouvorPro</h1>
+          <img src="/images/logo.png" alt="LouvorPro" className="h-10 w-auto object-contain mb-4" />
           <p className="text-muted-foreground mt-1 text-sm">Gestão de ministério de louvor</p>
         </div>
 

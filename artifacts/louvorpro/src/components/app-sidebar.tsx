@@ -40,15 +40,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-border bg-sidebar">
       <SidebarHeader className="p-4 pt-6 border-b border-border/50">
         <div className="flex items-center gap-3 px-2">
-          <div className="w-9 h-9 rounded-xl bg-primary/15 border border-primary/30 flex items-center justify-center">
-            <Music className="w-5 h-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-base font-display font-bold tracking-tight text-foreground leading-none">
-              LouvorPro
-            </h2>
-            <p className="text-[10px] text-muted-foreground uppercase tracking-widest mt-0.5">Ministério</p>
-          </div>
+          <img src="/images/logo.png" alt="LouvorPro" className="h-10 w-auto object-contain" />
         </div>
       </SidebarHeader>
       <SidebarContent className="pt-4">
