@@ -34,7 +34,7 @@ const navItems = [
 export function AppSidebar() {
   const [location] = useLocation();
   const { profile, signOut } = useAuth();
-  const isAdmin = profile?.isAdmin === "true";
+  const isAdmin = !!profile?.isAdmin;
 
   return (
     <Sidebar className="border-r border-border bg-sidebar">
