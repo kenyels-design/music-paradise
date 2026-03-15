@@ -1,0 +1,6 @@
+{
+  "buildCommand": "pnpm --filter @workspace/louvorpro run build",
+  "outputDirectory": "artifacts/louvorpro/dist/public",
+  "installCommand": "pnpm install",
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
