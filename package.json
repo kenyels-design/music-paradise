@@ -11,6 +11,7 @@
   },
   "private": true,
   "devDependencies": {
+    "@replit/connectors-sdk": "^0.3.0",
     "@types/node": "catalog:",
     "prettier": "^3.8.1",
     "typescript": "~5.9.2"
