@@ -24,7 +24,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -257,12 +256,10 @@ export default function Services() {
           </Popover>
 
           {/* Botão Agendar */}
+          <Button className="hover-elevate shadow-md flex-1 sm:flex-none" onClick={() => setIsDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Agendar Culto
+          </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="hover-elevate shadow-md flex-1 sm:flex-none">
-                <Plus className="w-4 h-4 mr-2" /> Agendar Culto
-              </Button>
-            </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Agendar Novo Culto</DialogTitle>
