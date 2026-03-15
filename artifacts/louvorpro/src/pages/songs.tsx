@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Music, Music2, Plus, Search, ExternalLink, Pencil, Trash2, Sparkles } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +19,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -49,6 +49,8 @@ type SongFormValues = z.infer<typeof songSchema>;
 
 export default function Songs() {
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const isAdmin = !!profile?.isAdmin;
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   
@@ -147,12 +149,12 @@ export default function Songs() {
           <p className="text-muted-foreground">Gerencie as músicas, tons e arranjos da equipe.</p>
         </div>
         
+        {isAdmin && (
+          <Button onClick={openCreate} className="hover-elevate shadow-md w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" /> Adicionar Música
+          </Button>
+        )}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate} className="hover-elevate shadow-md w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" /> Adicionar Música
-            </Button>
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Música" : "Adicionar Música"}</DialogTitle>
@@ -303,24 +305,32 @@ export default function Songs() {
                 transition={{ delay: index * 0.05 }}
               >
                 <Card className={`h-full border transition-colors group flex flex-col relative overflow-hidden ${
-                  isNew 
+                  isNew && hasBrass
+                    ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_hsl(180_100%_42%_/_0.08)]'
+                    : isNew 
                     ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_hsl(180_100%_42%_/_0.08)]' 
                     : hasBrass
                     ? 'border-amber-600/40 bg-amber-950/10'
                     : 'border-border/50 hover:border-primary/30'
                 }`}>
-                  {/* Banner de música nova */}
-                  {isNew && (
-                    <div className="absolute top-0 left-0 right-0 bg-primary/20 border-b border-primary/30 px-4 py-1.5 flex items-center gap-2">
-                      <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                      <span className="text-xs font-bold text-primary uppercase tracking-wider">Música Nova — Atenção Extra!</span>
-                    </div>
-                  )}
-                  {/* Banner com metais */}
-                  {!isNew && hasBrass && (
-                    <div className="absolute top-0 left-0 right-0 bg-amber-500/15 border-b border-amber-600/30 px-4 py-1.5 flex items-center gap-2">
-                      <Music2 className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
-                      <span className="text-xs font-bold text-amber-400 uppercase tracking-wider">Hino com Metais</span>
+                  {/* Banners — ambos aparecem lado a lado quando os dois são true */}
+                  {(isNew || hasBrass) && (
+                    <div className="absolute top-0 left-0 right-0 border-b border-primary/20 px-4 py-1.5 flex items-center gap-3 bg-black/20">
+                      {isNew && (
+                        <span className="flex items-center gap-1.5 text-xs font-bold text-primary uppercase tracking-wider">
+                          <Sparkles className="w-3.5 h-3.5 flex-shrink-0" />
+                          Música Nova
+                        </span>
+                      )}
+                      {isNew && hasBrass && (
+                        <span className="text-muted-foreground/40 text-xs">·</span>
+                      )}
+                      {hasBrass && (
+                        <span className="flex items-center gap-1.5 text-xs font-bold text-amber-400 uppercase tracking-wider">
+                          <Music2 className="w-3.5 h-3.5 flex-shrink-0" />
+                          Com Metais
+                        </span>
+                      )}
                     </div>
                   )}
                   <CardContent className={`p-5 flex flex-col h-full ${(isNew || hasBrass) ? 'pt-10' : ''}`}>
@@ -375,23 +385,25 @@ export default function Songs() {
                         )}
                       </div>
                       
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(song)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            if(confirm(`Excluir "${song.title}"?`)) {
-                              deleteMutation.mutate(song.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      {isAdmin && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(song)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              if(confirm(`Excluir "${song.title}"?`)) {
+                                deleteMutation.mutate(song.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

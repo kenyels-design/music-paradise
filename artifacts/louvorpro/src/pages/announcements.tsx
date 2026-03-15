@@ -8,6 +8,7 @@ import { ptBR } from "date-fns/locale";
 import { Megaphone, Plus, Trash2, Pin } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Form, FormControl, FormField, FormItem, FormLabel, FormMessage,
@@ -34,6 +35,8 @@ type AnnouncementFormValues = z.infer<typeof announcementSchema>;
 
 export default function Announcements() {
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const isAdmin = !!profile?.isAdmin;
   const queryClient = useQueryClient();
   const { data: announcements, isLoading } = useQuery({
     queryKey: ["announcements"],
@@ -83,12 +86,12 @@ export default function Announcements() {
           <p className="text-muted-foreground">Mantenha a equipe informada com as últimas novidades.</p>
         </div>
         
+        {isAdmin && (
+          <Button className="hover-elevate shadow-md w-full sm:w-auto" onClick={() => setIsDialogOpen(true)}>
+            <Plus className="w-4 h-4 mr-2" /> Novo Aviso
+          </Button>
+        )}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="hover-elevate shadow-md w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" /> Novo Aviso
-            </Button>
-          </DialogTrigger>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Publicar Aviso</DialogTitle>
@@ -164,13 +167,15 @@ export default function Announcements() {
                       {announcement.isPinned && <Pin className="w-4 h-4 text-accent fill-accent" />}
                       {announcement.title}
                     </CardTitle>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive -mt-2 -mr-2"
-                      onClick={() => {
-                        if(confirm('Excluir este aviso?')) deleteMutation.mutate(announcement.id);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {isAdmin && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive -mt-2 -mr-2"
+                        onClick={() => {
+                          if(confirm('Excluir este aviso?')) deleteMutation.mutate(announcement.id);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="pt-4">

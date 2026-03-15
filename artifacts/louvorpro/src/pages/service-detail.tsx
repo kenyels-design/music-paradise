@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter,
+  Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
@@ -42,6 +43,8 @@ export default function ServiceDetail() {
   const { id } = useParams();
   const serviceId = parseInt(id || "0");
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const isAdmin = !!profile?.isAdmin;
   const queryClient = useQueryClient();
 
   const { data: service, isLoading: loadingService } = useQuery({
@@ -196,10 +199,10 @@ export default function ServiceDetail() {
         <TabsContent value="setlist" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-foreground">Músicas ({setlist?.length || 0})</h3>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setAddSongOpen(true)}><Plus className="w-4 h-4 mr-1"/> Adicionar Música</Button>
+            )}
             <Dialog open={addSongOpen} onOpenChange={setAddSongOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm"><Plus className="w-4 h-4 mr-1"/> Adicionar Música</Button>
-              </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Adicionar ao Setlist</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-4">
@@ -270,11 +273,13 @@ export default function ServiceDetail() {
                             </p>
                           </div>
                         </div>
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
-                          onClick={() => removeSongMutation.mutate(item.id)}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
+                            onClick={() => removeSongMutation.mutate(item.id)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        )}
                       </div>
                     );
                   })}
@@ -288,10 +293,10 @@ export default function ServiceDetail() {
         <TabsContent value="team" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-foreground">Equipe Escalada ({assignments?.length || 0})</h3>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setAddMemberOpen(true)}><Plus className="w-4 h-4 mr-1"/> Escalar Membro</Button>
+            )}
             <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm"><Plus className="w-4 h-4 mr-1"/> Escalar Membro</Button>
-              </DialogTrigger>
               <DialogContent>
                 <DialogHeader><DialogTitle>Escalar Membro da Equipe</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-4">
@@ -360,11 +365,13 @@ export default function ServiceDetail() {
                         <p className="text-sm text-primary font-medium">{assignment.role || assignment.member.role}</p>
                       </div>
                     </div>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"
-                      onClick={() => removeMemberMutation.mutate(assignment.id)}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    {isAdmin && (
+                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"
+                        onClick={() => removeMemberMutation.mutate(assignment.id)}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </CardContent>
                 </Card>
               ))
@@ -376,10 +383,10 @@ export default function ServiceDetail() {
         <TabsContent value="playlists" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-foreground">Playlists ({playlists?.length || 0})</h3>
+            {isAdmin && (
+              <Button size="sm" onClick={() => setAddPlaylistOpen(true)}><Plus className="w-4 h-4 mr-1"/> Adicionar Playlist</Button>
+            )}
             <Dialog open={addPlaylistOpen} onOpenChange={setAddPlaylistOpen}>
-              <DialogTrigger asChild>
-                <Button size="sm"><Plus className="w-4 h-4 mr-1"/> Adicionar Playlist</Button>
-              </DialogTrigger>
               <DialogContent className="sm:max-w-[500px]">
                 <DialogHeader><DialogTitle>Nova Playlist</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-4">
@@ -483,14 +490,16 @@ export default function ServiceDetail() {
                           )}
                         </div>
                       </div>
-                      <Button 
-                        variant="ghost" 
-                        size="icon" 
-                        className="text-muted-foreground hover:text-destructive flex-shrink-0"
-                        onClick={() => deletePlaylistMutation.mutate(playlist.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {isAdmin && (
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="text-muted-foreground hover:text-destructive flex-shrink-0"
+                          onClick={() => deletePlaylistMutation.mutate(playlist.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                     </div>
                   </CardContent>
                 </Card>

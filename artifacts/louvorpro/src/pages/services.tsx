@@ -12,6 +12,7 @@ import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, Plus, ArrowRight, Clock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -183,6 +184,8 @@ function MiniCalendar({ services }: { services: any[] }) {
 
 export default function Services() {
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const isAdmin = !!profile?.isAdmin;
   const queryClient = useQueryClient();
   const { data: services, isLoading } = useQuery({
     queryKey: ["services"],
@@ -256,9 +259,11 @@ export default function Services() {
           </Popover>
 
           {/* Botão Agendar */}
-          <Button className="hover-elevate shadow-md flex-1 sm:flex-none" onClick={() => setIsDialogOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Agendar Culto
-          </Button>
+          {isAdmin && (
+            <Button className="hover-elevate shadow-md flex-1 sm:flex-none" onClick={() => setIsDialogOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" /> Agendar Culto
+            </Button>
+          )}
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent>
               <DialogHeader>
@@ -372,12 +377,14 @@ export default function Services() {
                     </div>
 
                     <div className="p-4 bg-secondary/10 flex items-center justify-end sm:justify-center border-t sm:border-t-0 sm:border-l border-border/50 gap-2">
-                      <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={(e) => {
-                        e.preventDefault();
-                        if(confirm('Excluir este culto?')) deleteMutation.mutate(service.id);
-                      }}>
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
+                      {isAdmin && (
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={(e) => {
+                          e.preventDefault();
+                          if(confirm('Excluir este culto?')) deleteMutation.mutate(service.id);
+                        }}>
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      )}
                       <Button asChild className="hover-elevate">
                         <Link href={`/services/${service.id}`}>
                           Planejar <ArrowRight className="w-4 h-4 ml-2" />

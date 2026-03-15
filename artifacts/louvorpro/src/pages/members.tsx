@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Users, Plus, Pencil, Trash2, Shield } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
+import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,7 +18,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
 import {
@@ -44,6 +44,8 @@ type MemberFormValues = z.infer<typeof memberSchema>;
 
 export default function Members() {
   const { toast } = useToast();
+  const { profile } = useAuth();
+  const isAdmin = !!profile?.isAdmin;
   const queryClient = useQueryClient();
   const { data: members, isLoading } = useQuery({
     queryKey: ["members"],
@@ -138,12 +140,12 @@ export default function Members() {
           <p className="text-muted-foreground">Gerencie os membros e funções da equipe.</p>
         </div>
         
+        {isAdmin && (
+          <Button onClick={openCreate} className="hover-elevate shadow-md w-full sm:w-auto">
+            <Plus className="w-4 h-4 mr-2" /> Adicionar Membro
+          </Button>
+        )}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreate} className="hover-elevate shadow-md w-full sm:w-auto">
-              <Plus className="w-4 h-4 mr-2" /> Adicionar Membro
-            </Button>
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Membro" : "Adicionar Membro"}</DialogTitle>
@@ -242,23 +244,25 @@ export default function Members() {
                         {member.role}
                       </Badge>
                       
-                      <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(member)}>
-                          <Pencil className="w-4 h-4" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                          onClick={() => {
-                            if(confirm(`Remover ${member.name} da equipe?`)) {
-                              deleteMutation.mutate(member.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                      {isAdmin && (
+                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-primary" onClick={() => openEdit(member)}>
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                            onClick={() => {
+                              if(confirm(`Remover ${member.name} da equipe?`)) {
+                                deleteMutation.mutate(member.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </CardContent>

@@ -11,7 +11,7 @@ export interface UserProfile {
   email: string;
   name: string;
   status: UserStatus;
-  isAdmin: string;
+  isAdmin: boolean;
   createdAt: string;
 }
 
