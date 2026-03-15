@@ -63,3 +63,10 @@ lib/
 - The frontend uses generated React Query hooks from `@workspace/api-client-react`
 - Database uses Drizzle ORM with PostgreSQL (not SQLite — uses Replit's built-in Postgres)
 - All routes are under `/api` prefix; frontend is served at `/`
+
+## GitHub Repository
+
+- **Repository**: https://github.com/kenyels-design/music-paradise
+- **Branch**: `main`
+- **Push method**: GitHub REST API (Git Data endpoints: Blobs/Trees/Commits/Refs) via `@replit/connectors-sdk` proxy. Native `git push` is not available because the Replit askpass token service (port 8284) does not respond for pid2 agent sessions.
+- **Excluded from repo**: `attached_assets/*.mp4` files (48MB screen recordings from chat, not application code)
