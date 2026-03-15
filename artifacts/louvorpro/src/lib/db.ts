@@ -288,6 +288,39 @@ export async function updateAssignmentStatus(assignmentId: number, status: Assig
   if (error) raise(error);
 }
 
+export async function listMyUpcomingAssignments(memberEmail: string): Promise<MyAssignment[]> {
+  const { data: memberData } = await supabase
+    .from("members")
+    .select("id")
+    .eq("email", memberEmail)
+    .maybeSingle();
+
+  if (!memberData) return [];
+
+  const { data, error } = await supabase
+    .from("service_assignments")
+    .select("*, service:services(*)")
+    .eq("member_id", (memberData as any).id)
+    .neq("status", "recusado");
+
+  if (error) raise(error);
+
+  const today = new Date().toISOString().split("T")[0];
+  return ((data || []) as any[])
+    .filter(a => a.service && a.service.date >= today)
+    .sort((a, b) => a.service.date.localeCompare(b.service.date))
+    .map(a => ({
+      id: a.id,
+      serviceId: a.service_id,
+      serviceTitle: a.service.title,
+      serviceDate: a.service.date,
+      serviceTime: a.service.time,
+      serviceTheme: a.service.theme,
+      assignmentRole: a.role,
+      status: (a.status || 'pendente') as AssignmentStatus,
+    }));
+}
+
 export async function listMyPendingAssignments(memberEmail: string): Promise<MyAssignment[]> {
   const { data: memberData } = await supabase
     .from("members")
