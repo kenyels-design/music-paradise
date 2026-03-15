@@ -160,6 +160,9 @@ importers:
       '@replit/connectors-sdk':
         specifier: ^0.3.0
         version: 0.3.0
+      '@supabase/supabase-js':
+        specifier: ^2.99.1
+        version: 2.99.1
     devDependencies:
       prettier:
         specifier: ^3.8.1
