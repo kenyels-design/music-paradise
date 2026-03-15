@@ -290,24 +290,23 @@ export default function Dashboard() {
                 myPendingAssignments.map(a => (
                   <div
                     key={a.id}
-                    className="flex flex-wrap items-center gap-3 p-4 rounded-xl bg-card border border-border/60"
+                    className="flex flex-col gap-3 p-4 rounded-xl bg-card border border-border/60"
                   >
-                    <div className="flex-1 min-w-0">
+                    <div className="w-full">
                       <p className="font-semibold text-foreground text-sm">{a.serviceTitle}</p>
-                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
-                        <Calendar className="w-3.5 h-3.5" />
-                        {format(parseISO(a.serviceDate), "EEEE, d 'de' MMMM", { locale: ptBR })}
-                        {a.serviceTime && ` · ${a.serviceTime}`}
+                      <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5 flex-wrap">
+                        <Calendar className="w-3.5 h-3.5 flex-shrink-0" />
+                        <span>{format(parseISO(a.serviceDate), "EEEE, d 'de' MMMM", { locale: ptBR })}{a.serviceTime && ` · ${a.serviceTime}`}</span>
                       </p>
                       {a.assignmentRole && (
                         <p className="text-xs text-primary font-medium mt-0.5">Função: {a.assignmentRole}</p>
                       )}
                     </div>
-                    <div className="flex gap-2 flex-shrink-0">
+                    <div className="flex gap-3 w-full">
                       <Button
                         size="sm"
                         disabled={confirmAssignmentMutation.isPending}
-                        className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white border-0"
+                        className="flex-1 h-9 text-xs bg-green-600 hover:bg-green-700 text-white border-0"
                         onClick={() => confirmAssignmentMutation.mutate({ id: a.id, status: "confirmado" })}
                       >
                         <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Confirmar
@@ -316,7 +315,7 @@ export default function Dashboard() {
                         size="sm"
                         variant="outline"
                         disabled={confirmAssignmentMutation.isPending}
-                        className="h-8 text-xs border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+                        className="flex-1 h-9 text-xs border-red-500/40 text-red-400 hover:bg-red-500/10 hover:text-red-300"
                         onClick={() => confirmAssignmentMutation.mutate({ id: a.id, status: "recusado" })}
                       >
                         <XCircle className="w-3.5 h-3.5 mr-1" /> Recusar
