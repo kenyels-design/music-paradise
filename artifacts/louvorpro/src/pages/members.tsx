@@ -4,14 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
 import { Users, Plus, Pencil, Trash2, Shield } from "lucide-react";
-import { 
-  useListMembers, 
-  useCreateMember, 
-  useUpdateMember, 
-  useDeleteMember,
-  getListMembersQueryKey 
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as db from "@/lib/db";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -51,39 +45,39 @@ type MemberFormValues = z.infer<typeof memberSchema>;
 export default function Members() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: members, isLoading } = useListMembers();
-  
-  const createMutation = useCreateMember({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
-        toast({ title: "Membro adicionado com sucesso" });
-        setIsDialogOpen(false);
-        form.reset();
-      },
-      onError: (err) => toast({ title: "Erro ao adicionar membro", description: err.message, variant: "destructive" })
-    }
+  const { data: members, isLoading } = useQuery({
+    queryKey: ["members"],
+    queryFn: db.listMembers,
   });
 
-  const updateMutation = useUpdateMember({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
-        toast({ title: "Membro atualizado com sucesso" });
-        setIsDialogOpen(false);
-        setEditingId(null);
-      },
-      onError: (err) => toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" })
-    }
+  const createMutation = useMutation({
+    mutationFn: db.createMember,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      toast({ title: "Membro adicionado com sucesso" });
+      setIsDialogOpen(false);
+      form.reset();
+    },
+    onError: (err: any) => toast({ title: "Erro ao adicionar membro", description: err.message, variant: "destructive" }),
   });
 
-  const deleteMutation = useDeleteMember({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListMembersQueryKey() });
-        toast({ title: "Membro removido" });
-      }
-    }
+  const updateMutation = useMutation({
+    mutationFn: db.updateMember,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      toast({ title: "Membro atualizado com sucesso" });
+      setIsDialogOpen(false);
+      setEditingId(null);
+    },
+    onError: (err: any) => toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: db.deleteMember,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["members"] });
+      toast({ title: "Membro removido" });
+    },
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -120,9 +114,9 @@ export default function Members() {
 
   const onSubmit = (data: MemberFormValues) => {
     if (editingId) {
-      updateMutation.mutate({ id: editingId, data });
+      updateMutation.mutate({ id: editingId, ...data });
     } else {
-      createMutation.mutate({ data });
+      createMutation.mutate(data);
     }
   };
 
@@ -258,7 +252,7 @@ export default function Members() {
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
                           onClick={() => {
                             if(confirm(`Remover ${member.name} da equipe?`)) {
-                              deleteMutation.mutate({ id: member.id });
+                              deleteMutation.mutate(member.id);
                             }
                           }}
                         >

@@ -10,13 +10,8 @@ import {
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Calendar as CalendarIcon, Plus, ArrowRight, Clock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
-import { 
-  useListServices, 
-  useCreateService, 
-  useDeleteService,
-  getListServicesQueryKey 
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as db from "@/lib/db";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -190,26 +185,27 @@ function MiniCalendar({ services }: { services: any[] }) {
 export default function Services() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: services, isLoading } = useListServices();
-  
-  const createMutation = useCreateService({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListServicesQueryKey() });
-        toast({ title: "Culto agendado com sucesso" });
-        setIsDialogOpen(false);
-        form.reset();
-      }
-    }
+  const { data: services, isLoading } = useQuery({
+    queryKey: ["services"],
+    queryFn: db.listServices,
   });
 
-  const deleteMutation = useDeleteService({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListServicesQueryKey() });
-        toast({ title: "Culto excluído" });
-      }
-    }
+  const createMutation = useMutation({
+    mutationFn: db.createService,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      toast({ title: "Culto agendado com sucesso" });
+      setIsDialogOpen(false);
+      form.reset();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: db.deleteService,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      toast({ title: "Culto excluído" });
+    },
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -226,7 +222,7 @@ export default function Services() {
   });
 
   const onSubmit = (data: ServiceFormValues) => {
-    createMutation.mutate({ data });
+    createMutation.mutate({ title: data.title, date: data.date, time: data.time, theme: data.theme, status: data.status });
   };
 
   const getStatusColor = (status: string) => {
@@ -381,7 +377,7 @@ export default function Services() {
                     <div className="p-4 bg-secondary/10 flex items-center justify-end sm:justify-center border-t sm:border-t-0 sm:border-l border-border/50 gap-2">
                       <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={(e) => {
                         e.preventDefault();
-                        if(confirm('Excluir este culto?')) deleteMutation.mutate({ id: service.id });
+                        if(confirm('Excluir este culto?')) deleteMutation.mutate(service.id);
                       }}>
                         <Trash2 className="w-4 h-4" />
                       </Button>

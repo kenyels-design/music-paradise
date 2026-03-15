@@ -6,13 +6,8 @@ import { motion } from "framer-motion";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Megaphone, Plus, Trash2, Pin } from "lucide-react";
-import { 
-  useListAnnouncements, 
-  useCreateAnnouncement, 
-  useDeleteAnnouncement,
-  getListAnnouncementsQueryKey 
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as db from "@/lib/db";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,26 +35,27 @@ type AnnouncementFormValues = z.infer<typeof announcementSchema>;
 export default function Announcements() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { data: announcements, isLoading } = useListAnnouncements();
-  
-  const createMutation = useCreateAnnouncement({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListAnnouncementsQueryKey() });
-        toast({ title: "Aviso publicado" });
-        setIsDialogOpen(false);
-        form.reset();
-      }
-    }
+  const { data: announcements, isLoading } = useQuery({
+    queryKey: ["announcements"],
+    queryFn: db.listAnnouncements,
   });
 
-  const deleteMutation = useDeleteAnnouncement({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListAnnouncementsQueryKey() });
-        toast({ title: "Aviso excluído" });
-      }
-    }
+  const createMutation = useMutation({
+    mutationFn: db.createAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      toast({ title: "Aviso publicado" });
+      setIsDialogOpen(false);
+      form.reset();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: db.deleteAnnouncement,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["announcements"] });
+      toast({ title: "Aviso excluído" });
+    },
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -70,7 +66,7 @@ export default function Announcements() {
   });
 
   const onSubmit = (data: AnnouncementFormValues) => {
-    createMutation.mutate({ data });
+    createMutation.mutate({ title: data.title, body: data.body, authorName: data.authorName, isPinned: data.isPinned });
   };
 
   const sortedAnnouncements = announcements?.sort((a, b) => {
@@ -170,7 +166,7 @@ export default function Announcements() {
                     </CardTitle>
                     <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive -mt-2 -mr-2"
                       onClick={() => {
-                        if(confirm('Excluir este aviso?')) deleteMutation.mutate({ id: announcement.id });
+                        if(confirm('Excluir este aviso?')) deleteMutation.mutate(announcement.id);
                       }}
                     >
                       <Trash2 className="w-4 h-4" />

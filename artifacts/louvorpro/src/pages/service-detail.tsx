@@ -7,27 +7,8 @@ import {
   Plus, Trash2, GripVertical, Settings, ListMusic,
   Youtube, ExternalLink, Sparkles, AlertTriangle
 } from "lucide-react";
-import { 
-  useGetService, 
-  useGetSetlist, 
-  useListServiceAssignments,
-  useListSongs,
-  useListMembers,
-  useAddToSetlist,
-  useRemoveFromSetlist,
-  useCreateServiceAssignment,
-  useDeleteServiceAssignment,
-  getGetSetlistQueryKey,
-  getListServiceAssignmentsQueryKey
-} from "@workspace/api-client-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-
-const ABSENCES_KEY = ["absences"];
-async function fetchAbsences() {
-  const base = import.meta.env.BASE_URL.replace(/\/$/, "");
-  const res = await fetch(`${base}/api/absences`);
-  return res.json();
-}
+import * as db from "@/lib/db";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -50,26 +31,6 @@ const statusLabel: Record<string, string> = {
   completed: "Realizado",
 };
 
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-async function fetchPlaylists(serviceId: number) {
-  const res = await fetch(`${BASE}/api/services/${serviceId}/playlists`);
-  return res.json();
-}
-
-async function createPlaylist(serviceId: number, data: any) {
-  const res = await fetch(`${BASE}/api/services/${serviceId}/playlists`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-
-async function deletePlaylist(id: number) {
-  await fetch(`${BASE}/api/playlists/${id}`, { method: "DELETE" });
-}
-
 type SpotifyIcon = React.FC<{ className?: string }>;
 const SpotifyIcon: SpotifyIcon = ({ className }) => (
   <svg className={className} viewBox="0 0 24 24" fill="currentColor">
@@ -83,28 +44,41 @@ export default function ServiceDetail() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: service, isLoading: loadingService } = useGetService(serviceId);
-  const { data: setlist, isLoading: loadingSetlist } = useGetSetlist(serviceId);
-  const { data: assignments, isLoading: loadingAssignments } = useListServiceAssignments(serviceId);
-  const { data: songs } = useListSongs();
-  const { data: members } = useListMembers();
-  const { data: absences } = useQuery({ queryKey: ABSENCES_KEY, queryFn: fetchAbsences });
+  const { data: service, isLoading: loadingService } = useQuery({
+    queryKey: ["service", serviceId],
+    queryFn: () => db.getService(serviceId),
+    enabled: serviceId > 0,
+  });
+  const { data: setlist, isLoading: loadingSetlist } = useQuery({
+    queryKey: ["setlist", serviceId],
+    queryFn: () => db.getSetlist(serviceId),
+    enabled: serviceId > 0,
+  });
+  const { data: assignments, isLoading: loadingAssignments } = useQuery({
+    queryKey: ["assignments", serviceId],
+    queryFn: () => db.listServiceAssignments(serviceId),
+    enabled: serviceId > 0,
+  });
+  const { data: songs } = useQuery({ queryKey: ["songs"], queryFn: db.listSongs });
+  const { data: members } = useQuery({ queryKey: ["members"], queryFn: db.listMembers });
+  const { data: absences } = useQuery({ queryKey: ["absences"], queryFn: db.listAbsences });
 
-  // IDs de membros ausentes na data do culto
   const absentMemberIds = new Set(
     (absences || [])
-      .filter((a: any) => service && a.date === service.date)
-      .map((a: any) => a.memberId)
+      .filter(a => service && a.date === service.date)
+      .map(a => a.memberId)
   );
 
   const playlistsKey = ["playlists", serviceId];
   const { data: playlists, isLoading: loadingPlaylists } = useQuery({
     queryKey: playlistsKey,
-    queryFn: () => fetchPlaylists(serviceId),
+    queryFn: () => db.listPlaylists(serviceId),
+    enabled: serviceId > 0,
   });
 
   const createPlaylistMutation = useMutation({
-    mutationFn: (data: any) => createPlaylist(serviceId, data),
+    mutationFn: (data: { name: string; notes: string; spotifyUrl: string; youtubeUrl: string }) =>
+      db.createPlaylist({ serviceId, ...data }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: playlistsKey });
       toast({ title: "Playlist adicionada" });
@@ -114,7 +88,7 @@ export default function ServiceDetail() {
   });
 
   const deletePlaylistMutation = useMutation({
-    mutationFn: (id: number) => deletePlaylist(id),
+    mutationFn: (id: number) => db.deletePlaylist(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: playlistsKey }),
   });
 
@@ -123,36 +97,32 @@ export default function ServiceDetail() {
   const [addPlaylistOpen, setAddPlaylistOpen] = useState(false);
   const [playlistForm, setPlaylistForm] = useState({ name: "", notes: "", spotifyUrl: "", youtubeUrl: "" });
 
-  const addSongMutation = useAddToSetlist({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getGetSetlistQueryKey(serviceId) });
-        toast({ title: "Música adicionada ao setlist" });
-        setAddSongOpen(false);
-      }
-    }
+  const addSongMutation = useMutation({
+    mutationFn: db.addToSetlist,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["setlist", serviceId] });
+      toast({ title: "Música adicionada ao setlist" });
+      setAddSongOpen(false);
+    },
   });
 
-  const removeSongMutation = useRemoveFromSetlist({
-    mutation: {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: getGetSetlistQueryKey(serviceId) })
-    }
+  const removeSongMutation = useMutation({
+    mutationFn: db.removeFromSetlist,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["setlist", serviceId] }),
   });
 
-  const addMemberMutation = useCreateServiceAssignment({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListServiceAssignmentsQueryKey(serviceId) });
-        toast({ title: "Membro escalado" });
-        setAddMemberOpen(false);
-      }
-    }
+  const addMemberMutation = useMutation({
+    mutationFn: db.createServiceAssignment,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["assignments", serviceId] });
+      toast({ title: "Membro escalado" });
+      setAddMemberOpen(false);
+    },
   });
 
-  const removeMemberMutation = useDeleteServiceAssignment({
-    mutation: {
-      onSuccess: () => queryClient.invalidateQueries({ queryKey: getListServiceAssignmentsQueryKey(serviceId) })
-    }
+  const removeMemberMutation = useMutation({
+    mutationFn: db.deleteServiceAssignment,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["assignments", serviceId] }),
   });
 
   const [selectedSongId, setSelectedSongId] = useState("");
@@ -163,23 +133,19 @@ export default function ServiceDetail() {
   const handleAddSong = () => {
     if (!selectedSongId) return;
     addSongMutation.mutate({
-      id: serviceId,
-      data: {
-        songId: parseInt(selectedSongId),
-        order: (setlist?.length || 0) + 1,
-        keyOverride: songKeyOverride || null
-      }
+      serviceId,
+      songId: parseInt(selectedSongId),
+      order: (setlist?.length || 0) + 1,
+      keyOverride: songKeyOverride || null,
     });
   };
 
   const handleAddMember = () => {
     if (!selectedMemberId) return;
     addMemberMutation.mutate({
-      id: serviceId,
-      data: {
-        memberId: parseInt(selectedMemberId),
-        role: memberRoleOverride || null
-      }
+      serviceId,
+      memberId: parseInt(selectedMemberId),
+      role: memberRoleOverride || null,
     });
   };
 
@@ -245,7 +211,7 @@ export default function ServiceDetail() {
                         {songs?.map(s => (
                           <SelectItem key={s.id} value={s.id.toString()}>
                             <span className="flex items-center gap-2">
-                              {(s as any).isNew && <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                              {s.isNew && <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
                               {s.title} {s.key ? `(Tom: ${s.key})` : ''}
                             </span>
                           </SelectItem>
@@ -278,7 +244,7 @@ export default function ServiceDetail() {
                 <div className="divide-y divide-border/50">
                   {setlist?.sort((a,b)=>a.order - b.order).map((item, i) => {
                     const songData = songMap.get(item.song?.id || 0) || item.song;
-                    const isNew = (songData as any)?.isNew;
+                    const isNew = songData?.isNew;
                     return (
                       <div key={item.id} className={`p-4 flex items-center justify-between transition-colors group ${isNew ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-secondary/30'}`}>
                         <div className="flex items-center gap-4">
@@ -305,7 +271,7 @@ export default function ServiceDetail() {
                           </div>
                         </div>
                         <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
-                          onClick={() => removeSongMutation.mutate({ id: serviceId, itemId: item.id })}
+                          onClick={() => removeSongMutation.mutate(item.id)}
                         >
                           <Trash2 className="w-4 h-4" />
                         </Button>
@@ -395,7 +361,7 @@ export default function ServiceDetail() {
                       </div>
                     </div>
                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"
-                      onClick={() => removeMemberMutation.mutate({ id: serviceId, assignmentId: assignment.id })}
+                      onClick={() => removeMemberMutation.mutate(assignment.id)}
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

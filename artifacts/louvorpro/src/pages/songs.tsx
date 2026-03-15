@@ -4,14 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
 import { Music, Music2, Plus, Search, ExternalLink, Pencil, Trash2, Sparkles } from "lucide-react";
-import { 
-  useListSongs, 
-  useCreateSong, 
-  useUpdateSong, 
-  useDeleteSong,
-  getListSongsQueryKey 
-} from "@workspace/api-client-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import * as db from "@/lib/db";
 import { useToast } from "@/hooks/use-toast";
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -58,36 +52,36 @@ export default function Songs() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState("");
   
-  const { data: songs, isLoading } = useListSongs();
-  
-  const createMutation = useCreateSong({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListSongsQueryKey() });
-        toast({ title: "Música adicionada ao repertório" });
-        setIsDialogOpen(false);
-        form.reset();
-      }
-    }
+  const { data: songs, isLoading } = useQuery({
+    queryKey: ["songs"],
+    queryFn: db.listSongs,
   });
 
-  const updateMutation = useUpdateSong({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListSongsQueryKey() });
-        toast({ title: "Música atualizada" });
-        setIsDialogOpen(false);
-      }
-    }
+  const createMutation = useMutation({
+    mutationFn: db.createSong,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      toast({ title: "Música adicionada ao repertório" });
+      setIsDialogOpen(false);
+      form.reset();
+    },
   });
 
-  const deleteMutation = useDeleteSong({
-    mutation: {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: getListSongsQueryKey() });
-        toast({ title: "Música removida" });
-      }
-    }
+  const updateMutation = useMutation({
+    mutationFn: db.updateSong,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      toast({ title: "Música atualizada" });
+      setIsDialogOpen(false);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: db.deleteSong,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["songs"] });
+      toast({ title: "Música removida" });
+    },
   });
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -134,9 +128,9 @@ export default function Songs() {
       tags: data.tags.split(",").map(t => t.trim()).filter(Boolean)
     };
     if (editingId) {
-      updateMutation.mutate({ id: editingId, data: payload });
+      updateMutation.mutate({ id: editingId, ...payload });
     } else {
-      createMutation.mutate({ data: payload });
+      createMutation.mutate(payload);
     }
   };
 
@@ -391,7 +385,7 @@ export default function Songs() {
                           className="h-8 w-8 text-muted-foreground hover:text-destructive"
                           onClick={() => {
                             if(confirm(`Excluir "${song.title}"?`)) {
-                              deleteMutation.mutate({ id: song.id });
+                              deleteMutation.mutate(song.id);
                             }
                           }}
                         >

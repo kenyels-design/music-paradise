@@ -1,11 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  useListServices, 
-  useListMembers, 
-  useListSongs, 
-  useListAnnouncements 
-} from "@workspace/api-client-react";
+import * as db from "@/lib/db";
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { format, isAfter, parseISO } from "date-fns";
@@ -28,43 +23,22 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 
-const BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
-
-async function fetchAbsences() {
-  const res = await fetch(`${BASE}/api/absences`);
-  return res.json();
-}
-async function createAbsence(data: { memberId: number; date: string; reason?: string }) {
-  const res = await fetch(`${BASE}/api/absences`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  return res.json();
-}
-async function deleteAbsence(id: number) {
-  await fetch(`${BASE}/api/absences/${id}`, { method: "DELETE" });
-}
-
-const ABSENCES_KEY = ["absences"];
-
 export default function Dashboard() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: services, isLoading: loadingServices } = useListServices();
-  const { data: members, isLoading: loadingMembers } = useListMembers();
-  const { data: songs, isLoading: loadingSongs } = useListSongs();
-  const { data: announcements, isLoading: loadingAnnouncements } = useListAnnouncements();
-  const { data: absences, isLoading: loadingAbsences } = useQuery({
-    queryKey: ABSENCES_KEY,
-    queryFn: fetchAbsences,
-  });
+  const { data: services, isLoading: loadingServices } = useQuery({ queryKey: ["services"], queryFn: db.listServices });
+  const { data: members, isLoading: loadingMembers } = useQuery({ queryKey: ["members"], queryFn: db.listMembers });
+  const { data: songs, isLoading: loadingSongs } = useQuery({ queryKey: ["songs"], queryFn: db.listSongs });
+  const { data: announcements, isLoading: loadingAnnouncements } = useQuery({ queryKey: ["announcements"], queryFn: db.listAnnouncements });
+  const { data: absences, isLoading: loadingAbsences } = useQuery({ queryKey: ["absences"], queryFn: db.listAbsences });
+
+  const memberMap = new Map((members || []).map(m => [m.id, m]));
 
   const createAbsenceMutation = useMutation({
-    mutationFn: createAbsence,
+    mutationFn: db.createAbsence,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ABSENCES_KEY });
+      queryClient.invalidateQueries({ queryKey: ["absences"] });
       toast({ title: "Ausência registrada com sucesso" });
       setAbsenceDialogOpen(false);
       setAbsenceForm({ memberId: "", date: format(new Date(), "yyyy-MM-dd"), reason: "" });
@@ -72,8 +46,8 @@ export default function Dashboard() {
   });
 
   const deleteAbsenceMutation = useMutation({
-    mutationFn: deleteAbsence,
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ABSENCES_KEY }),
+    mutationFn: db.deleteAbsence,
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["absences"] }),
   });
 
   const [absenceDialogOpen, setAbsenceDialogOpen] = useState(false);
@@ -99,10 +73,9 @@ export default function Dashboard() {
   const nextService = upcomingServices[0];
   const pinnedAnnouncements = announcements?.filter(a => a.isPinned) || [];
 
-  // Future absences to show on dashboard
-  const upcomingAbsences = (absences || []).filter((a: any) => 
+  const upcomingAbsences = (absences || []).filter(a =>
     a.date >= format(now, "yyyy-MM-dd")
-  ).sort((a: any, b: any) => a.date.localeCompare(b.date));
+  ).sort((a, b) => a.date.localeCompare(b.date));
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -391,17 +364,19 @@ export default function Dashboard() {
               </div>
             ) : (
               <div className="space-y-2">
-                {upcomingAbsences.map((absence: any) => (
+                {upcomingAbsences.map((absence) => {
+                  const memberName = memberMap.get(absence.memberId)?.name || "Desconhecido";
+                  return (
                   <div
                     key={absence.id}
                     className="flex items-center justify-between p-4 rounded-xl bg-amber-950/10 border border-amber-600/20 group"
                   >
                     <div className="flex items-center gap-4">
                       <div className="w-10 h-10 rounded-full bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 font-bold flex-shrink-0">
-                        {absence.memberName?.charAt(0) || "?"}
+                        {memberName.charAt(0)}
                       </div>
                       <div>
-                        <p className="font-semibold text-foreground">{absence.memberName}</p>
+                        <p className="font-semibold text-foreground">{memberName}</p>
                         <div className="flex items-center gap-2 flex-wrap">
                           <p className="text-sm text-amber-400 font-medium">
                             {format(parseISO(absence.date), "EEEE, d 'de' MMMM", { locale: ptBR })}
@@ -424,7 +399,8 @@ export default function Dashboard() {
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             )}
           </CardContent>
