@@ -40,7 +40,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-border bg-sidebar">
       <SidebarHeader className="p-4 pt-6 border-b border-border/50">
         <div className="flex items-center gap-3 px-2">
-          <img src="/images/logo.png" alt="LouvorPro" className="h-10 w-auto object-contain" />
+          <img src="/images/logo.png" alt="LouvorPro" className="h-12 w-auto object-contain" />
         </div>
       </SidebarHeader>
       <SidebarContent className="pt-4">

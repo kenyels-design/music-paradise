@@ -59,7 +59,7 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <img src="/images/logo.png" alt="LouvorPro" className="h-10 w-auto object-contain mb-4" />
+          <img src="/images/logo.png" alt="LouvorPro" className="h-32 w-auto object-contain mb-4" />
           <p className="text-muted-foreground mt-1 text-sm">Gestão de ministério de louvor</p>
         </div>
 
