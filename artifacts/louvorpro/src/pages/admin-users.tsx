@@ -26,7 +26,7 @@ interface UserProfile {
   email: string;
   name: string;
   status: UserStatus;
-  isAdmin: string;
+  isAdmin: boolean;
   createdAt: string;
 }
 
@@ -88,7 +88,7 @@ export default function AdminUsers() {
     },
   });
 
-  if (currentUser?.isAdmin !== "true") {
+  if (!currentUser?.isAdmin) {
     return (
       <div className="flex flex-col items-center justify-center h-64 gap-3">
         <ShieldOff className="w-12 h-12 text-muted-foreground/40" />
@@ -211,40 +211,41 @@ function UserCard({
   const isSelf = user.id === currentUserId;
 
   return (
-    <div className="flex items-center gap-4 bg-card border border-border rounded-xl px-4 py-3 group">
+    <div className="flex flex-wrap items-center gap-3 bg-card border border-border rounded-xl px-4 py-3 group">
       <div className="w-9 h-9 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
         <span className="text-sm font-bold text-primary">
           {user.name.charAt(0).toUpperCase()}
         </span>
       </div>
+
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2">
-          <p className="text-sm font-semibold text-foreground truncate">{user.name}</p>
-          {user.isAdmin === "true" && (
-            <span className="text-[10px] bg-primary/15 text-primary border border-primary/20 rounded px-1.5 py-0.5 font-semibold">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <p className="text-sm font-semibold text-foreground truncate max-w-[180px]">{user.name}</p>
+          {user.isAdmin && (
+            <span className="text-[10px] bg-primary/15 text-primary border border-primary/20 rounded px-1.5 py-0.5 font-semibold flex-shrink-0">
               Admin
             </span>
           )}
           {isSelf && (
-            <span className="text-[10px] text-muted-foreground">(você)</span>
+            <span className="text-[10px] text-muted-foreground flex-shrink-0">(você)</span>
           )}
         </div>
         <p className="text-xs text-muted-foreground truncate">{user.email}</p>
       </div>
 
-      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold ${cfg.color}`}>
+      <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-semibold flex-shrink-0 ${cfg.color}`}>
         {cfg.icon}
         {cfg.label}
       </div>
 
       {!isSelf && (
-        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           {user.status !== "aprovado" && (
             <Button
               size="sm"
               variant="outline"
               disabled={isPending}
-              className="h-7 text-xs border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300"
+              className="h-7 text-xs border-green-500/30 text-green-400 hover:bg-green-500/10 hover:text-green-300 flex-1 sm:flex-none"
               onClick={() => onAction("aprovado")}
             >
               <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Aprovar
@@ -255,7 +256,7 @@ function UserCard({
               size="sm"
               variant="outline"
               disabled={isPending}
-              className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300"
+              className="h-7 text-xs border-red-500/30 text-red-400 hover:bg-red-500/10 hover:text-red-300 flex-1 sm:flex-none"
               onClick={() => onAction("rejeitado")}
             >
               <XCircle className="w-3.5 h-3.5 mr-1" /> Rejeitar
@@ -266,7 +267,7 @@ function UserCard({
               size="sm"
               variant="outline"
               disabled={isPending}
-              className="h-7 text-xs text-muted-foreground hover:text-foreground"
+              className="h-7 text-xs text-muted-foreground hover:text-foreground flex-1 sm:flex-none"
               onClick={() => onAction("pendente")}
             >
               <Clock className="w-3.5 h-3.5 mr-1" /> Pendente

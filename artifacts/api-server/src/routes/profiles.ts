@@ -9,7 +9,7 @@ function toClientProfile(p: UserProfile) {
     email: p.email,
     name: p.name,
     status: p.status,
-    isAdmin: String(p.is_admin),
+    isAdmin: p.is_admin === true,
     createdAt: p.created_at,
   };
 }
@@ -80,6 +80,25 @@ router.patch("/profiles/:id/status", async (req, res) => {
       .single();
 
     if (error || !data) return res.status(404).json({ error: "Perfil não encontrado" });
+
+    if (status === "aprovado") {
+      const profile = data as UserProfile;
+      const { data: existingMember } = await supabaseAdmin
+        .from("members")
+        .select("id")
+        .eq("email", profile.email)
+        .maybeSingle();
+
+      if (!existingMember) {
+        await supabaseAdmin.from("members").insert({
+          name: profile.name,
+          email: profile.email,
+          role: "Membro",
+          is_leader: false,
+        });
+      }
+    }
+
     return res.json(toClientProfile(data as UserProfile));
   } catch (err) {
     console.error(err);

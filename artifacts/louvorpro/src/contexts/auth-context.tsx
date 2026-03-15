@@ -20,6 +20,7 @@ interface AuthContextValue {
   session: Session | null;
   profile: UserProfile | null;
   loading: boolean;
+  profileLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -49,12 +50,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [profileLoading, setProfileLoading] = useState(false);
 
   const refreshProfile = async () => {
     const { data: { user: currentUser } } = await supabase.auth.getUser();
     if (!currentUser) return;
+    setProfileLoading(true);
     const p = await fetchProfile(currentUser.id);
     setProfile(p);
+    setProfileLoading(false);
   };
 
   useEffect(() => {
@@ -62,8 +66,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        setProfileLoading(true);
         const p = await fetchProfile(s.user.id);
         setProfile(p);
+        setProfileLoading(false);
       }
       setLoading(false);
     });
@@ -72,10 +78,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setSession(s);
       setUser(s?.user ?? null);
       if (s?.user) {
+        setProfileLoading(true);
         const p = await fetchProfile(s.user.id);
         setProfile(p);
+        setProfileLoading(false);
       } else {
         setProfile(null);
+        setProfileLoading(false);
       }
     });
 
@@ -100,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signIn, signUp, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, session, profile, loading, profileLoading, signIn, signUp, signOut, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );
