@@ -405,6 +405,66 @@ export async function deletePlaylist(id: number): Promise<void> {
   if (error) raise(error);
 }
 
+// ─── CHANNEL MAP ───────────────────────────────────────────────────────────
+
+export interface ChannelMap {
+  id: number;
+  instrument: string;
+  inputChannel: number | null;
+  outputChannel: number | null;
+  notes: string | null;
+  createdAt: string;
+}
+
+const mapChannelMap = (c: any): ChannelMap => ({
+  id: c.id, instrument: c.instrument,
+  inputChannel: c.input_channel, outputChannel: c.output_channel,
+  notes: c.notes, createdAt: c.created_at,
+});
+
+export async function listChannelMap(): Promise<{ data: ChannelMap[]; tableExists: boolean }> {
+  const { data, error } = await supabase.from("channel_maps").select("*").order("input_channel", { ascending: true, nullsFirst: false });
+  if (error) {
+    if (error.code === "PGRST205" || error.message?.includes("channel_maps")) {
+      return { data: [], tableExists: false };
+    }
+    raise(error);
+  }
+  return { data: (data || []).map(mapChannelMap), tableExists: true };
+}
+
+export async function createChannelMap(input: {
+  instrument: string; inputChannel?: number | null; outputChannel?: number | null; notes?: string | null;
+}): Promise<ChannelMap> {
+  const { data, error } = await supabase.from("channel_maps").insert({
+    instrument: input.instrument,
+    input_channel: input.inputChannel ?? null,
+    output_channel: input.outputChannel ?? null,
+    notes: input.notes || null,
+  }).select().single();
+  if (error) raise(error);
+  return mapChannelMap(data);
+}
+
+export async function updateChannelMap(input: {
+  id: number; instrument?: string; inputChannel?: number | null; outputChannel?: number | null; notes?: string | null;
+}): Promise<ChannelMap> {
+  const { id, ...rest } = input;
+  const { data, error } = await supabase.from("channel_maps").update({
+    instrument: rest.instrument,
+    input_channel: rest.inputChannel ?? null,
+    output_channel: rest.outputChannel ?? null,
+    notes: rest.notes ?? null,
+  }).eq("id", id).select().single();
+  if (error) raise(error);
+  return mapChannelMap(data);
+}
+
+export async function deleteChannelMap(id: number): Promise<void> {
+  const { error } = await supabase.from("channel_maps").delete().eq("id", id);
+  if (error) raise(error);
+}
+
 // ─── ABSENCES ──────────────────────────────────────────────────────────────
 
 export async function listAbsences(): Promise<Absence[]> {

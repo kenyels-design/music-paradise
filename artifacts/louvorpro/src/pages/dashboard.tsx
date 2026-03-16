@@ -7,7 +7,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Calendar, Clock, Music2, CheckCircle2, XCircle, Youtube,
-  BellRing, Megaphone, ArrowRight, Guitar, BookOpen, Sparkles
+  BellRing, Megaphone, ArrowRight, Guitar, BookOpen, Sparkles, BookMarked
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -320,6 +320,17 @@ export default function Dashboard() {
                               title="Abrir no YouTube"
                             >
                               <Youtube className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          {si.song.cifraClubUrl && (
+                            <a
+                              href={si.song.cifraClubUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary active:bg-primary/20 transition-colors"
+                              title="Abrir no Cifra Club"
+                            >
+                              <BookMarked className="w-3.5 h-3.5" />
                             </a>
                           )}
                         </div>

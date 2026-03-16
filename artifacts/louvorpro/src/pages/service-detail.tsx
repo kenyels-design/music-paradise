@@ -6,7 +6,7 @@ import {
   ArrowLeft, Calendar, Clock, Music, Users, 
   Plus, Trash2, GripVertical, Settings, ListMusic,
   Youtube, ExternalLink, Sparkles, AlertTriangle,
-  CheckCircle2, XCircle, HelpCircle
+  CheckCircle2, XCircle, HelpCircle, BookOpen, Search
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
@@ -137,6 +137,7 @@ export default function ServiceDetail() {
 
   const [selectedSongId, setSelectedSongId] = useState("");
   const [songKeyOverride, setSongKeyOverride] = useState("");
+  const [songSearch, setSongSearch] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [memberRoleOverride, setMemberRoleOverride] = useState("");
 
@@ -209,27 +210,49 @@ export default function ServiceDetail() {
             {isAdmin && (
               <Button size="sm" onClick={() => setAddSongOpen(true)}><Plus className="w-4 h-4 mr-1"/> Adicionar Música</Button>
             )}
-            <Dialog open={addSongOpen} onOpenChange={setAddSongOpen}>
-              <DialogContent>
+            <Dialog open={addSongOpen} onOpenChange={(open) => { setAddSongOpen(open); if (!open) { setSongSearch(""); setSelectedSongId(""); setSongKeyOverride(""); } }}>
+              <DialogContent className="sm:max-w-[460px]">
                 <DialogHeader><DialogTitle>Adicionar ao Setlist</DialogTitle></DialogHeader>
-                <div className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium">Selecionar Música</label>
-                    <Select onValueChange={setSelectedSongId} value={selectedSongId}>
-                      <SelectTrigger><SelectValue placeholder="Escolha uma música..." /></SelectTrigger>
-                      <SelectContent>
-                        {songs?.map(s => (
-                          <SelectItem key={s.id} value={s.id.toString()}>
-                            <span className="flex items-center gap-2">
-                              {s.isNew && <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
-                              {s.title} {s.key ? `(Tom: ${s.key})` : ''}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                <div className="space-y-4 pt-2">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    <Input
+                      className="pl-9"
+                      placeholder="Buscar música por título ou artista..."
+                      value={songSearch}
+                      onChange={e => { setSongSearch(e.target.value); setSelectedSongId(""); }}
+                    />
                   </div>
-                  <div className="space-y-2">
+                  <div className="max-h-52 overflow-y-auto rounded-lg border border-border/50 divide-y divide-border/30">
+                    {(() => {
+                      const term = songSearch.toLowerCase();
+                      const filtered = (songs || []).filter(s =>
+                        s.title.toLowerCase().includes(term) ||
+                        (s.artist || "").toLowerCase().includes(term)
+                      );
+                      if (filtered.length === 0) return (
+                        <div className="p-4 text-center text-sm text-muted-foreground">Nenhuma música encontrada.</div>
+                      );
+                      return filtered.map(s => (
+                        <button
+                          key={s.id}
+                          type="button"
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors hover:bg-secondary/40 ${selectedSongId === s.id.toString() ? "bg-primary/10 border-l-2 border-primary" : ""}`}
+                          onClick={() => setSelectedSongId(s.id.toString())}
+                        >
+                          {s.isNew && <Sparkles className="w-3.5 h-3.5 text-primary flex-shrink-0" />}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-foreground truncate">{s.title}</p>
+                            <p className="text-xs text-muted-foreground truncate">{s.artist || "—"}{s.key ? ` • Tom: ${s.key}` : ""}</p>
+                          </div>
+                          {selectedSongId === s.id.toString() && (
+                            <div className="w-2 h-2 rounded-full bg-primary flex-shrink-0" />
+                          )}
+                        </button>
+                      ));
+                    })()}
+                  </div>
+                  <div className="space-y-1.5">
                     <label className="text-sm font-medium">Substituição de Tom (Opcional)</label>
                     <Input placeholder="ex: G" value={songKeyOverride} onChange={e => setSongKeyOverride(e.target.value)} />
                     <p className="text-xs text-muted-foreground">Deixe em branco para usar o tom padrão da música</p>
@@ -280,16 +303,42 @@ export default function ServiceDetail() {
                             </p>
                           </div>
                         </div>
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0"
-                            onClick={() => removeSongMutation.mutate(item.id)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        )}
+                        <div className="flex items-center gap-1 flex-shrink-0">
+                          {songData?.youtubeUrl && (
+                            <a
+                              href={songData.youtubeUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-8 h-8 rounded-lg bg-red-600/10 border border-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-600/20 transition-colors"
+                              title="Abrir no YouTube"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <Youtube className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          {songData?.cifraClubUrl && (
+                            <a
+                              href={songData.cifraClubUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors"
+                              title="Abrir no Cifra Club"
+                              onClick={e => e.stopPropagation()}
+                            >
+                              <BookOpen className="w-3.5 h-3.5" />
+                            </a>
+                          )}
+                          {isAdmin && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0"
+                              onClick={() => removeSongMutation.mutate(item.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
