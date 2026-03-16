@@ -5,7 +5,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import {
   ListMusic, Plus, Trash2, Pencil, Search, Copy, Check,
-  ExternalLink, AlertTriangle, Music2, X,
+  ExternalLink, AlertTriangle, Music2, X, Youtube,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -93,8 +93,8 @@ function SetupBanner({ sql }: { sql: string }) {
   );
 }
 
-type PlaylistForm = { name: string; description: string };
-const emptyForm: PlaylistForm = { name: "", description: "" };
+type PlaylistForm = { name: string; description: string; spotifyUrl: string; youtubeUrl: string };
+const emptyForm: PlaylistForm = { name: "", description: "", spotifyUrl: "", youtubeUrl: "" };
 
 export default function FreePlaylists() {
   const { profile } = useAuth();
@@ -128,13 +128,19 @@ export default function FreePlaylists() {
   });
 
   const createMutation = useMutation({
-    mutationFn: (f: PlaylistForm) => db.createFreePlaylist({ name: f.name.trim(), description: f.description.trim() || null }),
+    mutationFn: (f: PlaylistForm) => db.createFreePlaylist({
+      name: f.name.trim(), description: f.description.trim() || null,
+      spotifyUrl: f.spotifyUrl.trim() || null, youtubeUrl: f.youtubeUrl.trim() || null,
+    }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["freePlaylists"] }); toast({ title: "Playlist criada" }); setFormOpen(false); },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
 
   const updateMutation = useMutation({
-    mutationFn: (f: PlaylistForm) => db.updateFreePlaylist({ id: editItem!.id, name: f.name.trim(), description: f.description.trim() || null }),
+    mutationFn: (f: PlaylistForm) => db.updateFreePlaylist({
+      id: editItem!.id, name: f.name.trim(), description: f.description.trim() || null,
+      spotifyUrl: f.spotifyUrl.trim() || null, youtubeUrl: f.youtubeUrl.trim() || null,
+    }),
     onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["freePlaylists"] }); toast({ title: "Playlist atualizada" }); setFormOpen(false); },
     onError: (e: any) => toast({ title: "Erro", description: e.message, variant: "destructive" }),
   });
@@ -156,7 +162,11 @@ export default function FreePlaylists() {
   });
 
   const openCreate = () => { setEditItem(null); setForm(emptyForm); setFormOpen(true); };
-  const openEdit = (pl: db.FreePlaylist) => { setEditItem(pl); setForm({ name: pl.name, description: pl.description ?? "" }); setFormOpen(true); };
+  const openEdit = (pl: db.FreePlaylist) => {
+    setEditItem(pl);
+    setForm({ name: pl.name, description: pl.description ?? "", spotifyUrl: pl.spotifyUrl ?? "", youtubeUrl: pl.youtubeUrl ?? "" });
+    setFormOpen(true);
+  };
   const handleSave = () => { if (!form.name.trim()) return; if (editItem) updateMutation.mutate(form); else createMutation.mutate(form); };
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
@@ -233,9 +243,21 @@ export default function FreePlaylists() {
                     </div>
                   )}
                 </div>
-                <div className="flex items-center gap-2 mt-4 pt-3 border-t border-border/40">
-                  <ListMusic className="w-3.5 h-3.5 text-primary flex-shrink-0" />
-                  <span className="text-xs text-muted-foreground">Clique para ver músicas</span>
+                <div className="flex items-center justify-between gap-2 mt-4 pt-3 border-t border-border/40">
+                  <div className="flex items-center gap-2">
+                    <ListMusic className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                    <span className="text-xs text-muted-foreground">Clique para ver músicas</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {pl.spotifyUrl && (
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-[#1DB954] flex-shrink-0" aria-label="Spotify" title="Spotify">
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                      </svg>
+                    )}
+                    {pl.youtubeUrl && (
+                      <Youtube className="w-3.5 h-3.5 text-[#FF0000] flex-shrink-0" aria-label="YouTube" title="YouTube" />
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -253,6 +275,36 @@ export default function FreePlaylists() {
             </DialogTitle>
             {selectedPlaylist?.description && (
               <p className="text-sm text-muted-foreground">{selectedPlaylist.description}</p>
+            )}
+            {(selectedPlaylist?.spotifyUrl || selectedPlaylist?.youtubeUrl) && (
+              <div className="flex items-center gap-2 pt-1">
+                {selectedPlaylist.spotifyUrl && (
+                  <a href={selectedPlaylist.spotifyUrl} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-xs gap-1.5 border-[#1DB954]/30 text-[#1DB954] hover:bg-[#1DB954]/10 hover:border-[#1DB954]/60"
+                    >
+                      <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current" aria-hidden="true">
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                      </svg>
+                      Spotify
+                    </Button>
+                  </a>
+                )}
+                {selectedPlaylist.youtubeUrl && (
+                  <a href={selectedPlaylist.youtubeUrl} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-8 px-3 text-xs gap-1.5 border-[#FF0000]/30 text-[#FF0000] hover:bg-[#FF0000]/10 hover:border-[#FF0000]/60"
+                    >
+                      <Youtube className="w-3.5 h-3.5" />
+                      YouTube
+                    </Button>
+                  </a>
+                )}
+              </div>
             )}
           </DialogHeader>
           <div className="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -367,6 +419,30 @@ export default function FreePlaylists() {
                 className="min-h-[70px] resize-none"
                 value={form.description}
                 onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-[#1DB954]" aria-hidden="true">
+                  <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                </svg>
+                Link do Spotify <span className="text-muted-foreground font-normal">(Opcional)</span>
+              </label>
+              <Input
+                placeholder="https://open.spotify.com/playlist/..."
+                value={form.spotifyUrl}
+                onChange={e => setForm(f => ({ ...f, spotifyUrl: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium flex items-center gap-2">
+                <Youtube className="w-3.5 h-3.5 text-[#FF0000]" />
+                Link do YouTube <span className="text-muted-foreground font-normal">(Opcional)</span>
+              </label>
+              <Input
+                placeholder="https://youtube.com/playlist?list=..."
+                value={form.youtubeUrl}
+                onChange={e => setForm(f => ({ ...f, youtubeUrl: e.target.value }))}
               />
             </div>
           </div>

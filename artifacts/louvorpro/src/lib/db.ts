@@ -519,12 +519,16 @@ export interface FreePlaylist {
   id: number;
   name: string;
   description: string | null;
+  spotifyUrl: string | null;
+  youtubeUrl: string | null;
   createdAt: string;
   songs?: Song[];
 }
 
 const mapFreePlaylist = (p: any): FreePlaylist => ({
-  id: p.id, name: p.name, description: p.description ?? null, createdAt: p.created_at,
+  id: p.id, name: p.name, description: p.description ?? null,
+  spotifyUrl: p.spotify_url ?? null, youtubeUrl: p.youtube_url ?? null,
+  createdAt: p.created_at,
 });
 
 export async function listFreePlaylists(): Promise<{ data: FreePlaylist[]; tableExists: boolean }> {
@@ -538,18 +542,26 @@ export async function listFreePlaylists(): Promise<{ data: FreePlaylist[]; table
   return { data: (data || []).map(mapFreePlaylist), tableExists: true };
 }
 
-export async function createFreePlaylist(input: { name: string; description?: string | null }): Promise<FreePlaylist> {
+export async function createFreePlaylist(input: {
+  name: string; description?: string | null;
+  spotifyUrl?: string | null; youtubeUrl?: string | null;
+}): Promise<FreePlaylist> {
   const { data, error } = await supabase.from("free_playlists").insert({
     name: input.name, description: input.description || null,
+    spotify_url: input.spotifyUrl || null, youtube_url: input.youtubeUrl || null,
   }).select().single();
   if (error) raise(error);
   return mapFreePlaylist(data);
 }
 
-export async function updateFreePlaylist(input: { id: number; name?: string; description?: string | null }): Promise<FreePlaylist> {
+export async function updateFreePlaylist(input: {
+  id: number; name?: string; description?: string | null;
+  spotifyUrl?: string | null; youtubeUrl?: string | null;
+}): Promise<FreePlaylist> {
   const { id, ...rest } = input;
   const { data, error } = await supabase.from("free_playlists").update({
     name: rest.name, description: rest.description ?? null,
+    spotify_url: rest.spotifyUrl ?? null, youtube_url: rest.youtubeUrl ?? null,
   }).eq("id", id).select().single();
   if (error) raise(error);
   return mapFreePlaylist(data);
