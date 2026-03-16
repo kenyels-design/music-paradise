@@ -9,7 +9,7 @@ import {
   isSameMonth, isSameDay, addMonths, subMonths, getDay, startOfWeek
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Calendar as CalendarIcon, Plus, ArrowRight, Clock, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar as CalendarIcon, Plus, ArrowRight, Clock, Trash2, ChevronLeft, ChevronRight, History, CalendarDays } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -235,7 +236,10 @@ export default function Services() {
     }
   };
 
-  const sortedServices = services?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) || [];
+  const today = format(new Date(), "yyyy-MM-dd");
+  const allServices = services?.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) || [];
+  const upcomingServices = [...allServices].filter(s => s.date >= today).reverse();
+  const pastServices = allServices.filter(s => s.date < today).slice(0, 30);
 
   return (
     <div className="space-y-6">
@@ -329,75 +333,143 @@ export default function Services() {
         </div>
       </div>
 
-      <div className="space-y-4">
-        {isLoading ? (
-          Array.from({ length: 4 }).map((_, i) => (
+      {isLoading ? (
+        <div className="space-y-4">
+          {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-24 w-full rounded-xl" />
-          ))
-        ) : sortedServices.length === 0 ? (
-          <div className="py-16 text-center border-2 border-dashed rounded-xl border-border">
-            <CalendarIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
-            <h3 className="text-lg font-medium text-foreground">Nenhum culto agendado</h3>
-            <p className="text-muted-foreground text-sm mb-4">Crie o primeiro culto para começar o planejamento.</p>
-            <Button variant="outline" onClick={() => setIsDialogOpen(true)}>Agendar Agora</Button>
-          </div>
-        ) : (
-          <div className="grid gap-4">
-            {sortedServices.map((service, index) => (
-              <motion.div 
-                key={service.id}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Card className="overflow-hidden hover:border-primary/40 transition-colors group">
-                  <CardContent className="p-0 flex flex-col sm:flex-row items-stretch">
-                    <div className="bg-secondary/50 p-4 sm:w-44 flex flex-col justify-center border-b sm:border-b-0 sm:border-r border-border/50">
-                      <p className="text-xs font-bold text-primary uppercase tracking-widest">
-                        {format(parseISO(service.date), 'MMM', { locale: ptBR })}
-                      </p>
-                      <p className="text-4xl font-display font-bold text-foreground -mt-0.5">
-                        {format(parseISO(service.date), 'dd')}
-                      </p>
-                      <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
-                        <Clock className="w-3 h-3" /> {service.time || 'A definir'}
-                      </p>
-                    </div>
-                    
-                    <div className="p-4 sm:p-6 flex-1 flex flex-col justify-center">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <h3 className="text-xl font-bold text-foreground">{service.title}</h3>
-                          {service.theme && <p className="text-muted-foreground mt-1 text-sm">{service.theme}</p>}
-                        </div>
-                        <Badge variant="outline" className={`${getStatusColor(service.status)} ml-2 flex-shrink-0`}>
-                          {statusLabel[service.status] || service.status}
-                        </Badge>
-                      </div>
-                    </div>
+          ))}
+        </div>
+      ) : (
+        <Tabs defaultValue="upcoming" className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="upcoming" className="flex items-center gap-2">
+              <CalendarDays className="w-4 h-4" />
+              Próximos
+              {upcomingServices.length > 0 && (
+                <span className="ml-1 text-[10px] bg-primary/20 text-primary font-bold rounded-full px-1.5 py-0.5">{upcomingServices.length}</span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="history" className="flex items-center gap-2">
+              <History className="w-4 h-4" />
+              Histórico
+              {pastServices.length > 0 && (
+                <span className="ml-1 text-[10px] bg-secondary text-muted-foreground font-bold rounded-full px-1.5 py-0.5">{pastServices.length}</span>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-                    <div className="p-4 bg-secondary/10 flex items-center justify-end sm:justify-center border-t sm:border-t-0 sm:border-l border-border/50 gap-2">
-                      {isAdmin && (
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={(e) => {
-                          e.preventDefault();
-                          if(confirm('Excluir este culto?')) deleteMutation.mutate(service.id);
-                        }}>
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      )}
-                      <Button asChild className="hover-elevate">
-                        <Link href={`/services/${service.id}`}>
-                          Planejar <ArrowRight className="w-4 h-4 ml-2" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
+          {/* ── ABA PRÓXIMOS ── */}
+          <TabsContent value="upcoming">
+            {upcomingServices.length === 0 ? (
+              <div className="py-16 text-center border-2 border-dashed rounded-xl border-border">
+                <CalendarIcon className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-foreground">Nenhum culto futuro</h3>
+                <p className="text-muted-foreground text-sm mb-4">Agende o próximo culto para começar o planejamento.</p>
+                {isAdmin && <Button variant="outline" onClick={() => setIsDialogOpen(true)}>Agendar Agora</Button>}
+              </div>
+            ) : (
+              <div className="grid gap-4">
+                {upcomingServices.map((service, index) => (
+                  <ServiceCard
+                    key={service.id}
+                    service={service}
+                    index={index}
+                    isAdmin={isAdmin}
+                    getStatusColor={getStatusColor}
+                    onDelete={() => { if (confirm('Excluir este culto?')) deleteMutation.mutate(service.id); }}
+                  />
+                ))}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* ── ABA HISTÓRICO ── */}
+          <TabsContent value="history">
+            {pastServices.length === 0 ? (
+              <div className="py-16 text-center border-2 border-dashed rounded-xl border-border">
+                <History className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+                <h3 className="text-lg font-medium text-foreground">Nenhum culto realizado</h3>
+                <p className="text-muted-foreground text-sm">O histórico aparece aqui após as datas passarem.</p>
+              </div>
+            ) : (
+              <>
+                {pastServices.length === 30 && (
+                  <p className="text-xs text-muted-foreground mb-3 px-1">Exibindo os últimos 30 cultos realizados.</p>
+                )}
+                <div className="grid gap-4">
+                  {pastServices.map((service, index) => (
+                    <ServiceCard
+                      key={service.id}
+                      service={service}
+                      index={index}
+                      isAdmin={isAdmin}
+                      getStatusColor={getStatusColor}
+                      onDelete={() => { if (confirm('Excluir este culto?')) deleteMutation.mutate(service.id); }}
+                      dimmed
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </TabsContent>
+        </Tabs>
+      )}
     </div>
+  );
+}
+
+function ServiceCard({ service, index, isAdmin, getStatusColor, onDelete, dimmed = false }: {
+  service: db.Service;
+  index: number;
+  isAdmin: boolean;
+  getStatusColor: (s: string) => string;
+  onDelete: () => void;
+  dimmed?: boolean;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -20 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.04 }}
+    >
+      <Card className={`overflow-hidden hover:border-primary/40 transition-colors group ${dimmed ? "opacity-70 hover:opacity-100" : ""}`}>
+        <CardContent className="p-0 flex flex-col sm:flex-row items-stretch">
+          <div className={`p-4 sm:w-44 flex flex-col justify-center border-b sm:border-b-0 sm:border-r border-border/50 ${dimmed ? "bg-secondary/20" : "bg-secondary/50"}`}>
+            <p className="text-xs font-bold text-primary uppercase tracking-widest">
+              {format(parseISO(service.date), 'MMM', { locale: ptBR })}
+            </p>
+            <p className="text-4xl font-display font-bold text-foreground -mt-0.5">
+              {format(parseISO(service.date), 'dd')}
+            </p>
+            <p className="text-sm text-muted-foreground mt-1 flex items-center gap-1">
+              <Clock className="w-3 h-3" /> {service.time || 'A definir'}
+            </p>
+          </div>
+          <div className="p-4 sm:p-6 flex-1 flex flex-col justify-center">
+            <div className="flex justify-between items-start">
+              <div>
+                <h3 className="text-xl font-bold text-foreground">{service.title}</h3>
+                {service.theme && <p className="text-muted-foreground mt-1 text-sm">{service.theme}</p>}
+              </div>
+              <Badge variant="outline" className={`${getStatusColor(service.status)} ml-2 flex-shrink-0`}>
+                {statusLabel[service.status] || service.status}
+              </Badge>
+            </div>
+          </div>
+          <div className="p-4 bg-secondary/10 flex items-center justify-end sm:justify-center border-t sm:border-t-0 sm:border-l border-border/50 gap-2">
+            {isAdmin && (
+              <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive" onClick={onDelete}>
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            )}
+            <Button asChild className="hover-elevate">
+              <Link href={`/services/${service.id}`}>
+                {dimmed ? "Ver" : "Planejar"} <ArrowRight className="w-4 h-4 ml-2" />
+              </Link>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    </motion.div>
   );
 }

@@ -592,3 +592,61 @@ export async function removeSongFromFreePlaylist(playlistId: number, songId: num
     .delete().eq("playlist_id", playlistId).eq("song_id", songId);
   if (error) raise(error);
 }
+
+// ─── HEALTH SCORE ────────────────────────────────────────────────────────────
+
+export interface HealthScore {
+  topPlayed: { song: Song; count: number }[];
+  frozen: Song[];
+}
+
+export async function getHealthScore(): Promise<HealthScore> {
+  const today = new Date();
+  const todayStr = today.toISOString().split("T")[0];
+  const d90 = new Date(today.getTime() - 90 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+  const d60 = new Date(today.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
+
+  const { data: services90, error: e1 } = await supabase
+    .from("services").select("id").gte("date", d90).lt("date", todayStr);
+  if (e1) raise(e1);
+
+  const ids90 = (services90 || []).map(s => s.id);
+  let topPlayed: { song: Song; count: number }[] = [];
+
+  if (ids90.length > 0) {
+    const { data: items90, error: e2 } = await supabase
+      .from("setlist_items").select("song_id, song:songs(*)").in("service_id", ids90);
+    if (e2) raise(e2);
+
+    const countMap = new Map<number, { song: Song; count: number }>();
+    for (const item of (items90 || [])) {
+      if (!item.song_id || !item.song) continue;
+      if (!countMap.has(item.song_id)) {
+        countMap.set(item.song_id, { song: mapSong(item.song as any), count: 0 });
+      }
+      countMap.get(item.song_id)!.count++;
+    }
+    topPlayed = Array.from(countMap.values()).sort((a, b) => b.count - a.count).slice(0, 5);
+  }
+
+  const { data: services60, error: e3 } = await supabase
+    .from("services").select("id").gte("date", d60).lt("date", todayStr);
+  if (e3) raise(e3);
+
+  const ids60 = (services60 || []).map(s => s.id);
+  let usedSongIds60 = new Set<number>();
+
+  if (ids60.length > 0) {
+    const { data: items60, error: e4 } = await supabase
+      .from("setlist_items").select("song_id").in("service_id", ids60);
+    if (e4) raise(e4);
+    usedSongIds60 = new Set((items60 || []).map((i: any) => i.song_id));
+  }
+
+  const { data: allSongs, error: e5 } = await supabase.from("songs").select("*").order("title");
+  if (e5) raise(e5);
+
+  const frozen = (allSongs || []).filter(s => !usedSongIds60.has(s.id)).map(mapSong);
+
+  return { topPlayed, frozen };
+}

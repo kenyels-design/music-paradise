@@ -279,37 +279,37 @@ export default function ServiceDetail() {
                     const songData = songMap.get(item.song?.id || 0) || item.song;
                     const isNew = songData?.isNew;
                     return (
-                      <div key={item.id} className={`p-4 flex items-center justify-between transition-colors group ${isNew ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-secondary/30'}`}>
-                        <div className="flex items-center gap-4">
-                          <div className="text-muted-foreground/30 px-2 py-4">
-                            <GripVertical className="w-5 h-5" />
-                          </div>
-                          <div className="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm flex-shrink-0">
+                      <div key={item.id} className={`px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 transition-colors group ${isNew ? 'bg-primary/5 hover:bg-primary/10' : 'hover:bg-secondary/30'}`}>
+                        {/* Linha 1: número + título + artista */}
+                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                          <GripVertical className="w-5 h-5 text-muted-foreground/30 flex-shrink-0" />
+                          <div className="w-7 h-7 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-xs flex-shrink-0">
                             {i + 1}
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-foreground flex items-center gap-2">
-                              {item.song.title}
+                          <div className="min-w-0 flex-1">
+                            <h4 className="font-semibold text-foreground flex flex-wrap items-center gap-1.5 leading-tight">
+                              <span className="break-words">{item.song.title}</span>
                               {isNew && (
-                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 rounded-full px-2 py-0.5">
+                                <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-primary bg-primary/15 border border-primary/30 rounded-full px-2 py-0.5 flex-shrink-0">
                                   <Sparkles className="w-2.5 h-2.5" /> Nova
                                 </span>
                               )}
                             </h4>
-                            <p className="text-sm text-muted-foreground">
-                              {item.song.artist} 
+                            <p className="text-xs text-muted-foreground truncate mt-0.5">
+                              {item.song.artist}
                               {(item.keyOverride || item.song.key) && ` • Tom: ${item.keyOverride || item.song.key}`}
                               {item.song.bpm && ` • ${item.song.bpm} BPM`}
                             </p>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1 flex-shrink-0">
+                        {/* Linha 2 mobile / direita desktop: botões de ação */}
+                        <div className="flex items-center gap-1 flex-shrink-0 pl-[60px] sm:pl-0">
                           {songData?.youtubeUrl && (
                             <a
                               href={songData.youtubeUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-8 h-8 rounded-lg bg-red-600/10 border border-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-600/20 transition-colors"
+                              className="w-8 h-8 rounded-lg bg-red-600/10 border border-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-600/20 transition-colors flex-shrink-0"
                               title="Abrir no YouTube"
                               onClick={e => e.stopPropagation()}
                             >
@@ -321,7 +321,7 @@ export default function ServiceDetail() {
                               href={songData.cifraClubUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors"
+                              className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors flex-shrink-0"
                               title="Abrir no Cifra Club"
                               onClick={e => e.stopPropagation()}
                             >
