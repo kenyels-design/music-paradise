@@ -49,7 +49,7 @@ export interface MyAssignment {
 
 export interface Announcement {
   id: number; title: string; body: string; authorName: string;
-  isPinned: boolean; createdAt: string;
+  isPinned: boolean; validUntil: string | null; createdAt: string;
 }
 
 export interface Playlist {
@@ -98,7 +98,7 @@ const mapAssignment = (a: any): ServiceAssignment => ({
 
 const mapAnnouncement = (a: any): Announcement => ({
   id: a.id, title: a.title, body: a.body, authorName: a.author_name,
-  isPinned: a.is_pinned, createdAt: a.created_at,
+  isPinned: a.is_pinned, validUntil: a.valid_until ?? null, createdAt: a.created_at,
 });
 
 const mapPlaylist = (p: any): Playlist => ({
@@ -356,20 +356,45 @@ export async function listMyPendingAssignments(memberEmail: string): Promise<MyA
 // ─── ANNOUNCEMENTS ─────────────────────────────────────────────────────────
 
 export async function listAnnouncements(): Promise<Announcement[]> {
+  const today = new Date().toISOString().split("T")[0];
+  // Try with valid_until filter (column may not exist yet, fallback gracefully)
   const { data, error } = await supabase
-    .from("announcements").select("*").order("created_at", { ascending: false });
-  if (error) raise(error);
+    .from("announcements")
+    .select("*")
+    .or(`valid_until.is.null,valid_until.gte.${today}`)
+    .order("created_at", { ascending: false });
+  if (error) {
+    // If column doesn't exist, fall back to unfiltered query
+    if (error.code === "PGRST116" || error.message?.includes("valid_until")) {
+      const { data: fallback, error: e2 } = await supabase
+        .from("announcements").select("*").order("created_at", { ascending: false });
+      if (e2) raise(e2);
+      return (fallback || []).map(mapAnnouncement);
+    }
+    raise(error);
+  }
   return (data || []).map(mapAnnouncement);
 }
 
 export async function createAnnouncement(input: {
-  title: string; body: string; authorName: string; isPinned?: boolean;
+  title: string; body: string; authorName: string; isPinned?: boolean; validUntil?: string | null;
 }): Promise<Announcement> {
-  const { data, error } = await supabase.from("announcements").insert({
+  const payload: any = {
     title: input.title, body: input.body,
     author_name: input.authorName, is_pinned: input.isPinned ?? false,
-  }).select().single();
-  if (error) raise(error);
+  };
+  if (input.validUntil !== undefined) payload.valid_until = input.validUntil ?? null;
+  const { data, error } = await supabase.from("announcements").insert(payload).select().single();
+  if (error) {
+    // If valid_until column doesn't exist, retry without it
+    if (error.message?.includes("valid_until")) {
+      delete payload.valid_until;
+      const { data: d2, error: e2 } = await supabase.from("announcements").insert(payload).select().single();
+      if (e2) raise(e2);
+      return mapAnnouncement(d2);
+    }
+    raise(error);
+  }
   return mapAnnouncement(data);
 }
 
@@ -485,5 +510,73 @@ export async function createAbsence(input: {
 
 export async function deleteAbsence(id: number): Promise<void> {
   const { error } = await supabase.from("absences").delete().eq("id", id);
+  if (error) raise(error);
+}
+
+// ─── FREE PLAYLISTS ─────────────────────────────────────────────────────────
+
+export interface FreePlaylist {
+  id: number;
+  name: string;
+  description: string | null;
+  createdAt: string;
+  songs?: Song[];
+}
+
+const mapFreePlaylist = (p: any): FreePlaylist => ({
+  id: p.id, name: p.name, description: p.description ?? null, createdAt: p.created_at,
+});
+
+export async function listFreePlaylists(): Promise<{ data: FreePlaylist[]; tableExists: boolean }> {
+  const { data, error } = await supabase.from("free_playlists").select("*").order("created_at", { ascending: false });
+  if (error) {
+    if (error.code === "PGRST205" || error.message?.includes("free_playlists")) {
+      return { data: [], tableExists: false };
+    }
+    raise(error);
+  }
+  return { data: (data || []).map(mapFreePlaylist), tableExists: true };
+}
+
+export async function createFreePlaylist(input: { name: string; description?: string | null }): Promise<FreePlaylist> {
+  const { data, error } = await supabase.from("free_playlists").insert({
+    name: input.name, description: input.description || null,
+  }).select().single();
+  if (error) raise(error);
+  return mapFreePlaylist(data);
+}
+
+export async function updateFreePlaylist(input: { id: number; name?: string; description?: string | null }): Promise<FreePlaylist> {
+  const { id, ...rest } = input;
+  const { data, error } = await supabase.from("free_playlists").update({
+    name: rest.name, description: rest.description ?? null,
+  }).eq("id", id).select().single();
+  if (error) raise(error);
+  return mapFreePlaylist(data);
+}
+
+export async function deleteFreePlaylist(id: number): Promise<void> {
+  const { error } = await supabase.from("free_playlists").delete().eq("id", id);
+  if (error) raise(error);
+}
+
+export async function getFreePlaylistSongs(playlistId: number): Promise<Song[]> {
+  const { data, error } = await supabase
+    .from("free_playlist_songs")
+    .select("song:songs(*)")
+    .eq("playlist_id", playlistId)
+    .order("created_at");
+  if (error) raise(error);
+  return (data || []).map((r: any) => mapSong(r.song));
+}
+
+export async function addSongToFreePlaylist(playlistId: number, songId: number): Promise<void> {
+  const { error } = await supabase.from("free_playlist_songs").insert({ playlist_id: playlistId, song_id: songId });
+  if (error && !error.message?.includes("unique")) raise(error);
+}
+
+export async function removeSongFromFreePlaylist(playlistId: number, songId: number): Promise<void> {
+  const { error } = await supabase.from("free_playlist_songs")
+    .delete().eq("playlist_id", playlistId).eq("song_id", songId);
   if (error) raise(error);
 }

@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { motion } from "framer-motion";
-import { Users, Plus, Pencil, Trash2, Shield, MoreVertical } from "lucide-react";
+import { Users, Plus, Pencil, Trash2, Shield, MoreVertical, Mic2 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
@@ -87,6 +87,7 @@ export default function Members() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [channelMapOpen, setChannelMapOpen] = useState(false);
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
@@ -135,19 +136,87 @@ export default function Members() {
     return 'bg-primary/10 text-primary border-primary/20';
   };
 
+  const channels = [
+    { num: 1,  label: "Fone Baixo",         type: "fone" },
+    { num: 2,  label: "Fone Teclado",        type: "fone" },
+    { num: 3,  label: "Fone Violão",         type: "fone" },
+    { num: 4,  label: "Fone Guitarra",       type: "fone" },
+    { num: 5,  label: "Fone Vocal",          type: "fone" },
+    { num: 6,  label: "Fone Vocal",          type: "fone" },
+    { num: 7,  label: "Line Teclado",        type: "line" },
+    { num: 8,  label: "Line Violão",         type: "line" },
+    { num: 9,  label: "Line Guitarra",       type: "line" },
+    { num: 10, label: "Microfone C/ Fio",    type: "mic"  },
+    { num: 11, label: "Multitrack",          type: "other"},
+  ];
+
   return (
     <div className="space-y-6">
+      {/* ─── Channel Map Dialog ─── */}
+      <Dialog open={channelMapOpen} onOpenChange={setChannelMapOpen}>
+        <DialogContent className="sm:max-w-[460px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Mic2 className="w-5 h-5 text-primary" /> Mapa de Canais e Retornos
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-5 pt-2">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-primary mb-2">Retornos (Fone / Monitor)</p>
+              <div className="space-y-1">
+                {channels.filter(c => c.type === "fone").map(c => (
+                  <div key={c.num} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary/5 border border-primary/15">
+                    <span className="w-7 h-7 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-xs font-bold text-primary flex-shrink-0">{c.num}</span>
+                    <span className="text-sm font-medium text-foreground">{c.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Entradas de Linha</p>
+              <div className="space-y-1">
+                {channels.filter(c => c.type === "line").map(c => (
+                  <div key={c.num} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-secondary/30 border border-border/40">
+                    <span className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground flex-shrink-0">{c.num}</span>
+                    <span className="text-sm font-medium text-foreground">{c.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Outros</p>
+              <div className="space-y-1">
+                {channels.filter(c => c.type === "mic" || c.type === "other").map(c => (
+                  <div key={c.num} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-secondary/30 border border-border/40">
+                    <span className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center text-xs font-bold text-foreground flex-shrink-0">{c.num}</span>
+                    <span className="text-sm font-medium text-foreground">{c.label}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-lg border border-amber-500/25 bg-amber-950/20 px-4 py-3 text-xs text-amber-300/80 leading-relaxed">
+              <span className="font-semibold text-amber-300">Obs.:</span> Abaixo do cubo, último hub à esquerda, input de cima — <span className="font-semibold text-amber-200">Line Baixo</span>.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-display font-bold text-foreground">Equipe de Louvor</h1>
           <p className="text-muted-foreground">Gerencie os membros e funções da equipe.</p>
         </div>
         
-        {isAdmin && (
-          <Button onClick={openCreate} className="hover-elevate shadow-md w-full sm:w-auto">
-            <Plus className="w-4 h-4 mr-2" /> Adicionar Membro
+        <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+          <Button variant="outline" size="sm" onClick={() => setChannelMapOpen(true)} className="border-primary/30 text-primary hover:bg-primary/10 w-full sm:w-auto">
+            <Mic2 className="w-4 h-4 mr-2" /> Ver Mapa de Canais e Retornos
           </Button>
-        )}
+          {isAdmin && (
+            <Button onClick={openCreate} className="hover-elevate shadow-md w-full sm:w-auto">
+              <Plus className="w-4 h-4 mr-2" /> Adicionar Membro
+            </Button>
+          )}
+        </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[480px]">
             <DialogHeader>

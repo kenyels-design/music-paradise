@@ -5,7 +5,7 @@ import * as z from "zod";
 import { motion } from "framer-motion";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Megaphone, Plus, Trash2, Pin } from "lucide-react";
+import { Megaphone, Plus, Trash2, Pin, CalendarOff } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
@@ -29,6 +29,7 @@ const announcementSchema = z.object({
   body: z.string().min(5, "Mensagem deve ter pelo menos 5 caracteres"),
   authorName: z.string().min(1, "Nome do autor é obrigatório"),
   isPinned: z.boolean().default(false),
+  validUntil: z.string().optional(),
 });
 
 type AnnouncementFormValues = z.infer<typeof announcementSchema>;
@@ -65,11 +66,15 @@ export default function Announcements() {
 
   const form = useForm<AnnouncementFormValues>({
     resolver: zodResolver(announcementSchema),
-    defaultValues: { title: "", body: "", authorName: "Líder de Louvor", isPinned: false },
+    defaultValues: { title: "", body: "", authorName: "Líder de Louvor", isPinned: false, validUntil: "" },
   });
 
   const onSubmit = (data: AnnouncementFormValues) => {
-    createMutation.mutate({ title: data.title, body: data.body, authorName: data.authorName, isPinned: data.isPinned });
+    createMutation.mutate({
+      title: data.title, body: data.body,
+      authorName: data.authorName, isPinned: data.isPinned,
+      validUntil: data.validUntil || null,
+    });
   };
 
   const sortedAnnouncements = announcements?.sort((a, b) => {
@@ -130,6 +135,19 @@ export default function Announcements() {
                     </div>
                   </FormItem>
                 )} />
+                <FormField control={form.control} name="validUntil" render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2">
+                      <CalendarOff className="w-3.5 h-3.5 text-muted-foreground" />
+                      Data de Expiração <span className="text-muted-foreground font-normal">(Opcional)</span>
+                    </FormLabel>
+                    <FormControl>
+                      <Input type="date" {...field} />
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">Após esta data o aviso desaparece automaticamente.</p>
+                    <FormMessage />
+                  </FormItem>
+                )} />
                 <DialogFooter className="pt-4">
                   <Button type="submit" disabled={createMutation.isPending}>
                     {createMutation.isPending ? "Publicando..." : "Publicar Aviso"}
@@ -180,9 +198,17 @@ export default function Announcements() {
                 </CardHeader>
                 <CardContent className="pt-4">
                   <p className="text-foreground whitespace-pre-wrap">{announcement.body}</p>
-                  <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground font-medium">
+                  <div className="mt-4 pt-4 border-t border-border/50 flex items-center justify-between flex-wrap gap-2 text-xs text-muted-foreground font-medium">
                     <span>{announcement.authorName}</span>
-                    <span>{format(parseISO(announcement.createdAt), "d 'de' MMM 'de' yyyy • HH:mm", { locale: ptBR })}</span>
+                    <div className="flex items-center gap-3">
+                      {announcement.validUntil && (
+                        <span className="flex items-center gap-1 text-amber-400/80">
+                          <CalendarOff className="w-3 h-3" />
+                          Expira em {format(parseISO(announcement.validUntil), "d 'de' MMM", { locale: ptBR })}
+                        </span>
+                      )}
+                      <span>{format(parseISO(announcement.createdAt), "d 'de' MMM 'de' yyyy • HH:mm", { locale: ptBR })}</span>
+                    </div>
                   </div>
                 </CardContent>
               </Card>

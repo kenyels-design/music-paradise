@@ -14,7 +14,7 @@ import Announcements from "./pages/announcements";
 import AuthPage from "./pages/auth";
 import PendingPage from "./pages/pending";
 import AdminUsers from "./pages/admin-users";
-import ChannelMap from "./pages/channel-map";
+import FreePlaylists from "./pages/playlists";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -57,7 +57,7 @@ function AppRoutes() {
         <Route path="/services" component={Services} />
         <Route path="/services/:id" component={ServiceDetail} />
         <Route path="/announcements" component={Announcements} />
-        <Route path="/channel-map" component={ChannelMap} />
+        <Route path="/playlists" component={FreePlaylists} />
         <Route path="/admin/users" component={AdminUsers} />
         <Route component={NotFound} />
       </Switch>

@@ -5,7 +5,7 @@ import {
   Music, 
   Calendar as CalendarIcon, 
   Megaphone,
-  Mic2,
+  ListMusic,
   ShieldCheck,
   LogOut,
 } from "lucide-react";
@@ -29,8 +29,8 @@ const navItems = [
   { title: "Equipe", url: "/members", icon: Users },
   { title: "Músicas", url: "/songs", icon: Music },
   { title: "Agenda", url: "/services", icon: CalendarIcon },
+  { title: "Playlists", url: "/playlists", icon: ListMusic },
   { title: "Avisos", url: "/announcements", icon: Megaphone },
-  { title: "Mapa de Canais", url: "/channel-map", icon: Mic2 },
 ];
 
 export function AppSidebar() {
