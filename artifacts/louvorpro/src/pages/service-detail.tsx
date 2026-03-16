@@ -281,7 +281,10 @@ export default function ServiceDetail() {
                           </div>
                         </div>
                         {isAdmin && (
-                          <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100"
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-muted-foreground hover:text-destructive flex-shrink-0"
                             onClick={() => removeSongMutation.mutate(item.id)}
                           >
                             <Trash2 className="w-4 h-4" />
