@@ -226,6 +226,16 @@ export async function createService(input: {
   return mapService(data);
 }
 
+export async function updateService(id: number, input: {
+  title: string; date: string; time?: string; theme?: string;
+}): Promise<Service> {
+  const { data, error } = await supabase.from("services")
+    .update({ title: input.title, date: input.date, time: input.time || null, theme: input.theme || null })
+    .eq("id", id).select().single();
+  if (error) raise(error);
+  return mapService(data);
+}
+
 export async function deleteService(id: number): Promise<void> {
   const { error } = await supabase.from("services").delete().eq("id", id);
   if (error) raise(error);
