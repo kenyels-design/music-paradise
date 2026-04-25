@@ -127,6 +127,33 @@ router.patch("/profiles/:id/status", async (req, res) => {
   }
 });
 
+router.patch("/profiles/:id/role", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { role } = req.body as { role: string };
+
+    if (!["musico", "tecnica", "admin"].includes(role)) {
+      return res.status(400).json({ error: "Role inválido. Use: musico, tecnica ou admin" });
+    }
+
+    const { data: updated, error } = await supabaseAdmin
+      .from("user_profiles")
+      .update({ role })
+      .eq("id", id)
+      .select()
+      .single();
+
+    if (error || !updated) {
+      return res.status(500).json({ error: "Erro ao atualizar role do perfil" });
+    }
+
+    return res.json(toClientProfile(updated as UserProfile));
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: "Erro interno do servidor" });
+  }
+});
+
 router.get("/profiles", async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
