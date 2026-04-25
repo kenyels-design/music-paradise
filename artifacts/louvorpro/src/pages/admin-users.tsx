@@ -281,8 +281,8 @@ function UserCard({
   isRolePending: boolean;
 }) {
   const cfg = statusConfig[user.status];
-  const roleCfg = roleConfig[user.role ?? "musico"];
   const isSelf = user.id === currentUserId;
+  const currentRole: UserRole = user.role ?? "musico";
 
   return (
     <div className="flex flex-col gap-3 bg-card border border-border rounded-xl px-4 py-3">
@@ -321,19 +321,21 @@ function UserCard({
         <div className="flex items-center gap-2 flex-1 min-w-[180px]">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Perfil:</span>
           <Select
-            value={user.role ?? "musico"}
-            onValueChange={(v) => onRoleChange(v as UserRole)}
+            value={currentRole}
+            onValueChange={(v: UserRole) => onRoleChange(v)}
             disabled={isSelf || isRolePending}
           >
-            <SelectTrigger className={`h-7 text-xs w-auto min-w-[140px] border-border/60 ${isRolePending ? "opacity-50" : ""}`}>
-              <SelectValue>
-                <span className={`flex items-center gap-1.5 ${roleCfg.color}`}>
-                  {roleCfg.icon}
-                  {roleCfg.label}
-                </span>
-              </SelectValue>
+            <SelectTrigger className={`h-7 text-xs w-auto min-w-[140px] border-border/60 gap-1.5 ${isRolePending ? "opacity-50" : ""}`}>
+              {/* Exibe o ícone+label correto com base no valor real vindo da API */}
+              <span className={`flex items-center gap-1.5 flex-1 ${roleConfig[currentRole].color}`}>
+                {roleConfig[currentRole].icon}
+                {roleConfig[currentRole].label}
+              </span>
+              {/* SelectValue necessário para o Radix funcionar, mas ocultado visualmente */}
+              <SelectValue className="sr-only" />
             </SelectTrigger>
             <SelectContent>
+              {/* value é ESTRITAMENTE o valor que vai para o banco — sem acento, minúsculo */}
               <SelectItem value="musico">
                 <span className="flex items-center gap-2">
                   <Music2 className="w-3.5 h-3.5 text-primary" />
@@ -343,7 +345,7 @@ function UserCard({
               <SelectItem value="tecnica">
                 <span className="flex items-center gap-2">
                   <Headphones className="w-3.5 h-3.5 text-sky-400" />
-                  Técnica/Som
+                  Técnica / Som
                 </span>
               </SelectItem>
               <SelectItem value="admin">
