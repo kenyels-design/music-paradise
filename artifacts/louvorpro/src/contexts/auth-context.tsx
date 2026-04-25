@@ -6,12 +6,15 @@ const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 export type UserStatus = "pendente" | "aprovado" | "rejeitado";
 
+export type UserRole = "musico" | "tecnica" | "admin";
+
 export interface UserProfile {
   id: string;
   email: string;
   name: string;
   status: UserStatus;
   isAdmin: boolean;
+  role: UserRole;
   createdAt: string;
 }
 

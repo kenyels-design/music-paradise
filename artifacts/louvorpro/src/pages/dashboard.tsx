@@ -7,7 +7,8 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import {
   Calendar, Clock, Music2, CheckCircle2, XCircle, Youtube,
-  BellRing, Megaphone, ArrowRight, Guitar, BookOpen, Sparkles, BookMarked
+  BellRing, Megaphone, ArrowRight, Guitar, BookOpen, Sparkles, BookMarked,
+  Headphones,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -138,19 +139,33 @@ export default function Dashboard() {
   const queryClient = useQueryClient();
   const { profile } = useAuth();
   const myEmail = profile?.email ?? "";
+  const isTecnica = profile?.role === "tecnica";
 
+  // ── Músicos: escalas pessoais ──
   const { data: myAssignments = [], isLoading: loadingAssignments } = useQuery({
     queryKey: ["myUpcomingAssignments", myEmail],
     queryFn: () => db.listMyUpcomingAssignments(myEmail),
-    enabled: !!myEmail,
+    enabled: !!myEmail && !isTecnica,
   });
+
+  // ── Técnica: agenda completa ──
+  const { data: allServices = [], isLoading: loadingServices } = useQuery({
+    queryKey: ["services"],
+    queryFn: db.listServices,
+    enabled: isTecnica,
+  });
+  const today = new Date().toISOString().split("T")[0];
+  const upcomingServices = [...allServices]
+    .filter(s => s.date >= today)
+    .sort((a, b) => a.date.localeCompare(b.date));
+  const nextService = upcomingServices[0] ?? null;
 
   const nextAssignment = myAssignments[0] ?? null;
 
   const { data: setlist = [], isLoading: loadingSetlist } = useQuery({
-    queryKey: ["setlist", nextAssignment?.serviceId],
-    queryFn: () => db.getSetlist(nextAssignment!.serviceId),
-    enabled: !!nextAssignment?.serviceId,
+    queryKey: ["setlist", isTecnica ? nextService?.id : nextAssignment?.serviceId],
+    queryFn: () => db.getSetlist(isTecnica ? nextService!.id : nextAssignment!.serviceId),
+    enabled: isTecnica ? !!nextService?.id : !!nextAssignment?.serviceId,
   });
 
   const { data: announcements = [], isLoading: loadingAnnouncements } = useQuery({
@@ -176,7 +191,7 @@ export default function Dashboard() {
     },
   });
 
-  const firstName = profile?.name?.split(" ")[0] ?? "Músico";
+  const firstName = profile?.name?.split(" ")[0] ?? (isTecnica ? "Técnico" : "Músico");
 
   return (
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
@@ -187,66 +202,143 @@ export default function Dashboard() {
           Olá, {firstName} 👋
         </h1>
         <p className="text-muted-foreground mt-1 text-sm">
-          {myAssignments.length > 0
-            ? `Você tem ${myAssignments.length} escala${myAssignments.length > 1 ? "s" : ""} programada${myAssignments.length > 1 ? "s" : ""}.`
-            : "Aqui está o seu painel pessoal."}
+          {isTecnica
+            ? `Modo leitura — Som & Projeção. Você tem ${upcomingServices.length} culto${upcomingServices.length !== 1 ? "s" : ""} na agenda.`
+            : myAssignments.length > 0
+              ? `Você tem ${myAssignments.length} escala${myAssignments.length > 1 ? "s" : ""} programada${myAssignments.length > 1 ? "s" : ""}.`
+              : "Aqui está o seu painel pessoal."}
         </p>
       </motion.div>
 
-      {/* ─── Carregando ─── */}
-      {loadingAssignments && (
-        <motion.div variants={item} className="space-y-4">
-          <Skeleton className="h-48 w-full rounded-2xl" />
-          <Skeleton className="h-36 w-full rounded-2xl" />
-        </motion.div>
+      {/* ════════════════════════════════════════════
+          VIEW TÉCNICA — agenda completa, leitura apenas
+          ════════════════════════════════════════════ */}
+      {isTecnica && (
+        <>
+          {/* Badge informativo */}
+          <motion.div variants={item}>
+            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-sky-500/10 border border-sky-500/20 text-sky-400 text-xs font-medium w-fit">
+              <Headphones className="w-3.5 h-3.5" />
+              Acesso Técnica — Som & Projeção (somente leitura)
+            </div>
+          </motion.div>
+
+          {loadingServices ? (
+            <motion.div variants={item} className="space-y-3">
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+            </motion.div>
+          ) : upcomingServices.length === 0 ? (
+            <motion.div variants={item}>
+              <Card className="border-border/40">
+                <CardContent className="flex flex-col items-center justify-center text-center py-12 px-6">
+                  <Calendar className="w-10 h-10 text-muted-foreground/30 mx-auto mb-3" />
+                  <h2 className="text-base font-semibold text-foreground mb-1">Nenhum culto agendado</h2>
+                  <p className="text-muted-foreground text-sm">Os próximos cultos aparecem aqui assim que forem cadastrados.</p>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ) : (
+            <motion.div variants={item} className="space-y-3">
+              {upcomingServices.map((service, idx) => (
+                <Card key={service.id} className={`border-border/40 ${idx === 0 ? "border-primary/30 shadow-md" : ""}`}>
+                  {idx === 0 && (
+                    <div className="h-0.5 w-full bg-gradient-to-r from-primary via-primary/60 to-transparent rounded-t-xl" />
+                  )}
+                  <CardContent className="p-4 flex items-center gap-4">
+                    <div className="flex-shrink-0 text-center w-12">
+                      <p className="text-[10px] font-bold text-primary uppercase tracking-widest">
+                        {format(parseISO(service.date), "MMM", { locale: ptBR })}
+                      </p>
+                      <p className="text-2xl font-display font-bold text-foreground leading-none">
+                        {format(parseISO(service.date), "dd")}
+                      </p>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-foreground truncate">{service.title}</p>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        {service.time && <><Clock className="w-3 h-3" />{service.time}</>}
+                        {service.theme && <span className="text-muted-foreground/70"> • {service.theme}</span>}
+                      </p>
+                    </div>
+                    {idx === 0 && (
+                      <Badge className="bg-primary/20 text-primary border-primary/30 text-[10px] flex-shrink-0">Próximo</Badge>
+                    )}
+                    <Button variant="ghost" size="sm" asChild className="flex-shrink-0 text-primary text-xs">
+                      <Link href={`/services/${service.id}`}>
+                        Ver Setlist <ArrowRight className="w-3 h-3 ml-1" />
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </motion.div>
+          )}
+        </>
       )}
 
-      {/* ─── Sem escalas ─── */}
-      {!loadingAssignments && myAssignments.length === 0 && (
-        <motion.div variants={item}>
-          <Card className="border-border/40">
-            <CardContent className="flex flex-col items-center justify-center text-center py-16 px-6">
-              <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-5">
-                <Guitar className="w-10 h-10 text-primary" />
-              </div>
-              <h2 className="text-lg font-semibold text-foreground mb-2">Nenhuma escala programada</h2>
-              <p className="text-muted-foreground text-sm max-w-xs">
-                Você não possui escalas no momento. Aproveite para estudar seu instrumento e explorar o repertório!
-              </p>
-              <Button asChild className="mt-6" variant="outline">
-                <Link href="/songs">Ver Repertório <ArrowRight className="w-4 h-4 ml-2" /></Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </motion.div>
-      )}
+      {/* ════════════════════════════════════════════
+          VIEW MÚSICO — escalas pessoais
+          ════════════════════════════════════════════ */}
+      {!isTecnica && (
+        <>
+          {/* ─── Carregando ─── */}
+          {loadingAssignments && (
+            <motion.div variants={item} className="space-y-4">
+              <Skeleton className="h-48 w-full rounded-2xl" />
+              <Skeleton className="h-36 w-full rounded-2xl" />
+            </motion.div>
+          )}
 
-      {/* ─── Lista de Escalas ─── */}
-      {!loadingAssignments && myAssignments.length > 0 && (
-        <motion.div variants={item} className="space-y-4">
-          {myAssignments.map((assignment, idx) => (
-            <AssignmentCard
-              key={assignment.id}
-              assignment={assignment}
-              isFirst={idx === 0}
-              isPending={assignment.status === "pendente"}
-              isLoading={confirmMutation.isPending}
-              onConfirm={() => confirmMutation.mutate({ id: assignment.id, status: "confirmado" })}
-              onRefuse={() => confirmMutation.mutate({ id: assignment.id, status: "recusado" })}
-            />
-          ))}
-        </motion.div>
+          {/* ─── Sem escalas ─── */}
+          {!loadingAssignments && myAssignments.length === 0 && (
+            <motion.div variants={item}>
+              <Card className="border-border/40">
+                <CardContent className="flex flex-col items-center justify-center text-center py-16 px-6">
+                  <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center mb-5">
+                    <Guitar className="w-10 h-10 text-primary" />
+                  </div>
+                  <h2 className="text-lg font-semibold text-foreground mb-2">Nenhuma escala programada</h2>
+                  <p className="text-muted-foreground text-sm max-w-xs">
+                    Você não possui escalas no momento. Aproveite para estudar seu instrumento e explorar o repertório!
+                  </p>
+                  <Button asChild className="mt-6" variant="outline">
+                    <Link href="/songs">Ver Repertório <ArrowRight className="w-4 h-4 ml-2" /></Link>
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* ─── Lista de Escalas ─── */}
+          {!loadingAssignments && myAssignments.length > 0 && (
+            <motion.div variants={item} className="space-y-4">
+              {myAssignments.map((assignment, idx) => (
+                <AssignmentCard
+                  key={assignment.id}
+                  assignment={assignment}
+                  isFirst={idx === 0}
+                  isPending={assignment.status === "pendente"}
+                  isLoading={confirmMutation.isPending}
+                  onConfirm={() => confirmMutation.mutate({ id: assignment.id, status: "confirmado" })}
+                  onRefuse={() => confirmMutation.mutate({ id: assignment.id, status: "recusado" })}
+                />
+              ))}
+            </motion.div>
+          )}
+        </>
       )}
 
       {/* ─── Setlist do Próximo Culto ─── */}
-      {nextAssignment && (
+      {(isTecnica ? nextService : nextAssignment) && (
         <motion.div variants={item}>
           <Card className="border-border/50">
             <CardHeader className="pb-3">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Music2 className="w-4 h-4 text-primary" />
-                  Setlist — {nextAssignment.serviceTitle}
+                  Setlist — {isTecnica ? nextService?.title : nextAssignment?.serviceTitle}
                 </CardTitle>
                 {setlist.length > 0 && (
                   <span className="text-xs text-muted-foreground">
@@ -254,7 +346,7 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-              <CardDescription>Músicas do próximo culto — estude antes!</CardDescription>
+              <CardDescription>{isTecnica ? "Músicas do próximo culto para preparação técnica." : "Músicas do próximo culto — estude antes!"}</CardDescription>
             </CardHeader>
             <CardContent>
               {loadingSetlist ? (

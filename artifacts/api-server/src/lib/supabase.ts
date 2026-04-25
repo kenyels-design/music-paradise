@@ -22,5 +22,6 @@ export interface UserProfile {
   name: string;
   status: UserStatus;
   is_admin: boolean;
+  role: string | null;
   created_at: string;
 }

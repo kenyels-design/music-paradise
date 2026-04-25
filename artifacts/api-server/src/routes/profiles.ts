@@ -10,6 +10,7 @@ function toClientProfile(p: UserProfile) {
     name: p.name,
     status: p.status,
     isAdmin: p.is_admin === true,
+    role: p.role ?? "musico",
     createdAt: p.created_at,
   };
 }
