@@ -143,14 +143,24 @@ router.patch("/profiles/:id/role", async (req, res) => {
       .select()
       .single();
 
-    if (error || !updated) {
-      return res.status(500).json({ error: "Erro ao atualizar role do perfil" });
+    if (error) {
+      console.error("[PATCH /role] Supabase error:", JSON.stringify(error));
+      return res.status(500).json({
+        error: `Supabase: ${error.message ?? error.details ?? "Erro desconhecido"}`,
+        code: error.code,
+        details: error.details,
+        hint: error.hint,
+      });
+    }
+
+    if (!updated) {
+      return res.status(404).json({ error: "Perfil não encontrado" });
     }
 
     return res.json(toClientProfile(updated as UserProfile));
-  } catch (err) {
-    console.error(err);
-    return res.status(500).json({ error: "Erro interno do servidor" });
+  } catch (err: any) {
+    console.error("[PATCH /role] Exception:", err);
+    return res.status(500).json({ error: err?.message ?? "Erro interno do servidor" });
   }
 });
 

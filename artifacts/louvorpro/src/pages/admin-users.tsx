@@ -141,7 +141,13 @@ export default function AdminUsers() {
       toast({ title: "Perfil atualizado", description: `${updated.name} agora é ${cfg.label}.` });
     },
     onError: (err: Error) => {
-      toast({ title: "Erro ao atualizar perfil", description: err.message, variant: "destructive" });
+      toast({
+        title: "Erro ao atualizar perfil",
+        description: err.message.length > 120 ? err.message.slice(0, 120) + "…" : err.message,
+        variant: "destructive",
+        duration: 8000,
+      });
+      console.error("[updateRole]", err.message);
     },
   });
 
