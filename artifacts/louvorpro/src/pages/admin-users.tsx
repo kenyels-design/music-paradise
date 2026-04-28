@@ -270,7 +270,7 @@ function UserCard({
         <div className="flex-1 min-w-0">
           <div className="flex flex-wrap items-center gap-1.5">
             <p className="text-sm font-semibold text-foreground truncate max-w-[180px]">{user.name}</p>
-            {user.isAdmin && (
+            {user.role === "admin" && (
               <span className="text-[10px] bg-primary/15 text-primary border border-primary/20 rounded px-1.5 py-0.5 font-semibold flex-shrink-0">
                 Admin
               </span>

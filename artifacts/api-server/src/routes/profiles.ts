@@ -168,7 +168,7 @@ router.get("/profiles", async (req, res) => {
   try {
     const { data, error } = await supabaseAdmin
       .from("user_profiles")
-      .select("*")
+      .select("id, email, name, status, role, is_admin, created_at")
       .order("created_at", { ascending: true });
 
     if (error) {
