@@ -1,7 +1,6 @@
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -60,11 +59,11 @@ async function updateStatus(id: string, status: UserStatus): Promise<UserProfile
   return res.json();
 }
 
-async function updateRole(id: string, role: UserRole, requesterId: string): Promise<UserProfile> {
-  const res = await fetch(`${API_BASE}/api/profiles/${id}/role`, {
+async function updateRole(targetUserId: string, novaRole: UserRole): Promise<UserProfile> {
+  const res = await fetch(`${API_BASE}/api/profiles/${targetUserId}/role`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role, requesterId }),
+    body: JSON.stringify({ role: novaRole }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -91,24 +90,6 @@ const statusConfig: Record<UserStatus, { label: string; color: string; icon: Rea
   },
 };
 
-const roleConfig: Record<UserRole, { label: string; icon: React.ReactNode; color: string }> = {
-  musico: {
-    label: "Músico",
-    icon: <Music2 className="w-3.5 h-3.5" />,
-    color: "text-primary",
-  },
-  tecnica: {
-    label: "Técnica/Som",
-    icon: <Headphones className="w-3.5 h-3.5" />,
-    color: "text-sky-400",
-  },
-  admin: {
-    label: "Administrador",
-    icon: <Shield className="w-3.5 h-3.5" />,
-    color: "text-yellow-400",
-  },
-};
-
 export default function AdminUsers() {
   const { profile: currentUser } = useAuth();
   const { toast } = useToast();
@@ -124,31 +105,23 @@ export default function AdminUsers() {
     mutationFn: ({ id, status }: { id: string; status: UserStatus }) => updateStatus(id, status),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
-      const cfg = statusConfig[updated.status];
-      toast({ title: "Status atualizado", description: `${updated.name} agora está como "${cfg.label}".` });
+      toast({ title: "Status atualizado", description: `${updated.name}: "${statusConfig[updated.status].label}".` });
       setActionTarget(null);
     },
     onError: (err: Error) => {
-      toast({ title: "Erro ao atualizar", description: err.message, variant: "destructive" });
+      toast({ title: "Erro", description: err.message, variant: "destructive" });
     },
   });
 
   const roleMutation = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: UserRole }) =>
-      updateRole(id, role, currentUser!.id),
+    mutationFn: ({ id, role }: { id: string; role: UserRole }) => updateRole(id, role),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
-      const cfg = roleConfig[updated.role];
-      toast({ title: "Perfil atualizado", description: `${updated.name} agora é ${cfg.label}.` });
+      const labels: Record<UserRole, string> = { musico: "Músico", tecnica: "Técnica/Som", admin: "Administrador" };
+      toast({ title: "Perfil atualizado", description: `${updated.name} agora é ${labels[updated.role]}.` });
     },
     onError: (err: Error) => {
-      toast({
-        title: "Erro ao atualizar perfil",
-        description: err.message.length > 120 ? err.message.slice(0, 120) + "…" : err.message,
-        variant: "destructive",
-        duration: 8000,
-      });
-      console.error("[updateRole]", err.message);
+      toast({ title: "Erro ao atualizar perfil", description: err.message, variant: "destructive" });
     },
   });
 
@@ -283,8 +256,6 @@ function UserCard({
 }) {
   const cfg = statusConfig[user.status];
   const isSelf = user.id === currentUserId;
-  // Leitura direta do banco — 'musico' como fallback se ainda não tiver valor
-  const currentRole: UserRole = (user.role || "musico") as UserRole;
 
   return (
     <div className="flex flex-col gap-3 bg-card border border-border rounded-xl px-4 py-3">
@@ -319,12 +290,13 @@ function UserCard({
 
       {/* Linha inferior: seletor de role + botões de status */}
       <div className="flex flex-wrap items-center gap-2 pl-0 sm:pl-12">
-        {/* Seletor de perfil (role) — sempre visível, desabilitado para si mesmo */}
         <div className="flex items-center gap-2 flex-1 min-w-[180px]">
           <span className="text-xs text-muted-foreground whitespace-nowrap">Perfil:</span>
+
+          {/* Disabled para o próprio usuário — exibe a role real, mas não permite alterar */}
           <Select
-            value={currentRole}
-            onValueChange={(v: UserRole) => onRoleChange(v)}
+            value={user.role || "musico"}
+            onValueChange={(v) => onRoleChange(v as UserRole)}
             disabled={isSelf || isRolePending}
           >
             <SelectTrigger className={`h-7 text-xs w-auto min-w-[140px] border-border/60 ${isRolePending ? "opacity-50" : ""}`}>
@@ -351,12 +323,13 @@ function UserCard({
               </SelectItem>
             </SelectContent>
           </Select>
+
           {isRolePending && (
             <div className="w-3.5 h-3.5 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
           )}
         </div>
 
-        {/* Botões de aprovação (apenas para outros usuários) */}
+        {/* Botões de status — apenas para outros usuários */}
         {!isSelf && (
           <div className="flex flex-wrap gap-2">
             {user.status !== "aprovado" && (

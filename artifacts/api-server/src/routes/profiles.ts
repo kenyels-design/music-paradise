@@ -130,43 +130,27 @@ router.patch("/profiles/:id/status", async (req, res) => {
 router.patch("/profiles/:id/role", async (req, res) => {
   try {
     const { id } = req.params;
-    const { role, requesterId } = req.body as { role: string; requesterId?: string };
+    const { role } = req.body as { role: string };
 
-    // Validação do valor enviado — deve ser exatamente um dos três
+    // Valor deve ser exatamente um dos três — sem acento, minúsculo
     if (!["musico", "tecnica", "admin"].includes(role)) {
       return res.status(400).json({ error: "Role inválido. Use: musico, tecnica ou admin" });
     }
 
-    // Verificação de segurança: o solicitante deve ser admin
-    if (requesterId) {
-      const { data: requester, error: requesterError } = await supabaseAdmin
-        .from("user_profiles")
-        .select("is_admin")
-        .eq("id", requesterId)
-        .single();
+    // Sincronia: se role = 'admin', is_admin = true; caso contrário, is_admin = false
+    const is_admin = role === "admin";
 
-      if (requesterError || !requester) {
-        return res.status(403).json({ error: "Solicitante não encontrado" });
-      }
-
-      if (requester.is_admin !== true) {
-        return res.status(403).json({ error: "Apenas administradores podem alterar perfis" });
-      }
-    }
-
-    // Update via Service Role Key — ignora completamente o RLS
+    // Update via Service Role Key (supabaseAdmin) — ignora completamente o RLS
     const { data: updated, error } = await supabaseAdmin
       .from("user_profiles")
-      .update({ role })
+      .update({ role, is_admin })
       .eq("id", id)
       .select()
       .single();
 
     if (error) {
       console.error("[PATCH /role] Supabase error:", JSON.stringify(error));
-      return res.status(500).json({
-        error: error.message ?? error.details ?? "Erro desconhecido no Supabase",
-      });
+      return res.status(500).json({ error: error.message ?? "Erro no Supabase" });
     }
 
     if (!updated) {
