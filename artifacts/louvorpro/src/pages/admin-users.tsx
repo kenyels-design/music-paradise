@@ -325,17 +325,10 @@ function UserCard({
             onValueChange={(v: UserRole) => onRoleChange(v)}
             disabled={isSelf || isRolePending}
           >
-            <SelectTrigger className={`h-7 text-xs w-auto min-w-[140px] border-border/60 gap-1.5 ${isRolePending ? "opacity-50" : ""}`}>
-              {/* Exibe o ícone+label correto com base no valor real vindo da API */}
-              <span className={`flex items-center gap-1.5 flex-1 ${roleConfig[currentRole].color}`}>
-                {roleConfig[currentRole].icon}
-                {roleConfig[currentRole].label}
-              </span>
-              {/* SelectValue necessário para o Radix funcionar, mas ocultado visualmente */}
-              <SelectValue className="sr-only" />
+            <SelectTrigger className={`h-7 text-xs w-auto min-w-[140px] border-border/60 ${isRolePending ? "opacity-50" : ""}`}>
+              <SelectValue placeholder="Selecione o perfil" />
             </SelectTrigger>
             <SelectContent>
-              {/* value é ESTRITAMENTE o valor que vai para o banco — sem acento, minúsculo */}
               <SelectItem value="musico">
                 <span className="flex items-center gap-2">
                   <Music2 className="w-3.5 h-3.5 text-primary" />
