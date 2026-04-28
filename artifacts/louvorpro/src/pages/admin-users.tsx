@@ -60,11 +60,11 @@ async function updateStatus(id: string, status: UserStatus): Promise<UserProfile
   return res.json();
 }
 
-async function updateRole(id: string, role: UserRole): Promise<UserProfile> {
+async function updateRole(id: string, role: UserRole, requesterId: string): Promise<UserProfile> {
   const res = await fetch(`${API_BASE}/api/profiles/${id}/role`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role }),
+    body: JSON.stringify({ role, requesterId }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -134,7 +134,8 @@ export default function AdminUsers() {
   });
 
   const roleMutation = useMutation({
-    mutationFn: ({ id, role }: { id: string; role: UserRole }) => updateRole(id, role),
+    mutationFn: ({ id, role }: { id: string; role: UserRole }) =>
+      updateRole(id, role, currentUser!.id),
     onSuccess: (updated) => {
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
       const cfg = roleConfig[updated.role];
@@ -282,7 +283,8 @@ function UserCard({
 }) {
   const cfg = statusConfig[user.status];
   const isSelf = user.id === currentUserId;
-  const currentRole: UserRole = user.role ?? "musico";
+  // Leitura direta do banco — 'musico' como fallback se ainda não tiver valor
+  const currentRole: UserRole = (user.role || "musico") as UserRole;
 
   return (
     <div className="flex flex-col gap-3 bg-card border border-border rounded-xl px-4 py-3">
