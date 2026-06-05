@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "./theme-toggle";
 
 const mainItems = [
   { title: "Início", url: "/", icon: Home },
@@ -123,7 +124,12 @@ export function BottomNav() {
               </button>
             )}
 
-            <div className="border-t border-border mt-2 pt-2">
+            <div className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-foreground">
+              <span>Tema</span>
+              <ThemeToggle />
+            </div>
+
+            <div className="border-t border-border mt-1 pt-2">
               <div className="flex items-center gap-3 px-3 py-2 mb-1">
                 <div className="w-7 h-7 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
                   <span className="text-xs font-bold text-primary">

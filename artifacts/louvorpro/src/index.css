@@ -66,6 +66,8 @@
   --opaque-button-border-intensity: 9;
   --elevate-1: rgba(255,255,255, .04);
   --elevate-2: rgba(255,255,255, .09);
+  --interactive-hover: rgba(255,255,255, 0.08);
+  --interactive-active: rgba(255,255,255, 0.14);
 
   /* LouvorPro Dark — fundo preto + acento ciano */
   --background: 0 0% 5%;
@@ -131,6 +133,56 @@
   --destructive-border: hsl(from hsl(var(--destructive)) h s calc(l + var(--opaque-button-border-intensity)) / alpha);
 }
 
+/* ─── Tema claro ─────────────────────────────────────────────────────────── */
+.light {
+  --button-outline: rgba(0,0,0, .08);
+  --badge-outline: rgba(0,0,0, .04);
+  --opaque-button-border-intensity: -6;
+  --elevate-1: rgba(0,0,0, .03);
+  --elevate-2: rgba(0,0,0, .06);
+  --interactive-hover: rgba(0,0,0, 0.06);
+  --interactive-active: rgba(0,0,0, 0.10);
+
+  --background: 0 0% 97%;
+  --foreground: 0 0% 9%;
+
+  --border: 0 0% 86%;
+  --input: 0 0% 92%;
+  --ring: 180 100% 35%;
+
+  --card: 0 0% 100%;
+  --card-foreground: 0 0% 9%;
+  --card-border: 0 0% 86%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 0 0% 9%;
+  --popover-border: 0 0% 86%;
+
+  --primary: 180 100% 35%;
+  --primary-foreground: 0 0% 100%;
+
+  --secondary: 0 0% 92%;
+  --secondary-foreground: 0 0% 15%;
+
+  --muted: 0 0% 92%;
+  --muted-foreground: 0 0% 42%;
+
+  --accent: 180 100% 35%;
+  --accent-foreground: 0 0% 100%;
+
+  --destructive: 0 72% 51%;
+  --destructive-foreground: 0 0% 100%;
+
+  --sidebar: 0 0% 95%;
+  --sidebar-foreground: 0 0% 15%;
+  --sidebar-border: 0 0% 86%;
+  --sidebar-primary: 180 100% 35%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 0 0% 90%;
+  --sidebar-accent-foreground: 0 0% 15%;
+  --sidebar-ring: 180 100% 35%;
+}
+
 @layer base {
   * {
     @apply border-border;
@@ -187,10 +239,10 @@
     @apply transition-colors duration-150 cursor-pointer rounded-md;
   }
   .hover-interactive:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: var(--interactive-hover);
   }
   .hover-interactive:active {
-    background-color: rgba(255, 255, 255, 0.14);
+    background-color: var(--interactive-active);
   }
 
   /* Glow ciano nos botões primários */

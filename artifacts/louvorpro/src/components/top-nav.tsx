@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "./theme-toggle";
 
 const navItems = [
   { title: "Início", url: "/", icon: Home },
@@ -79,7 +80,8 @@ export function TopNav() {
       </nav>
 
       {/* Usuário + logout */}
-      <div className="flex items-center gap-3 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
+        <ThemeToggle />
         <div className="text-right hidden lg:block">
           <p className="text-xs font-medium text-foreground leading-tight">
             {profile?.name}
