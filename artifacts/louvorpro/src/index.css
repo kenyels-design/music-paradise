@@ -95,9 +95,9 @@
   --muted: 0 0% 13%;
   --muted-foreground: 0 0% 50%;
 
-  /* Acento ciano mais brilhante */
-  --accent: 180 100% 42%;
-  --accent-foreground: 0 0% 5%;
+  /* Acento neutro para hover states (Shadcn usa --accent internamente) */
+  --accent: 0 0% 18%;
+  --accent-foreground: 0 0% 98%;
 
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 96%;
@@ -167,8 +167,8 @@
   --muted: 0 0% 92%;
   --muted-foreground: 0 0% 42%;
 
-  --accent: 180 100% 35%;
-  --accent-foreground: 0 0% 100%;
+  --accent: 0 0% 90%;
+  --accent-foreground: 0 0% 9%;
 
   --destructive: 0 72% 51%;
   --destructive-foreground: 0 0% 100%;

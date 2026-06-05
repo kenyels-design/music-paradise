@@ -243,9 +243,14 @@ export default function Services() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "confirmed": return "bg-emerald-900/30 text-emerald-400 border-emerald-800/50";
-      case "completed": return "bg-slate-800 text-slate-400 border-slate-700";
-      default: return "bg-amber-900/30 text-amber-400 border-amber-800/50";
+      case "confirmed":
+        return "text-green-700 bg-green-100 border-green-300 dark:text-green-400 dark:bg-green-400/10 dark:border-green-400/30";
+      case "completed":
+        return "text-slate-600 bg-slate-100 border-slate-300 dark:text-slate-400 dark:bg-slate-400/10 dark:border-slate-400/30";
+      case "cancelled":
+        return "text-red-700 bg-red-100 border-red-300 dark:text-red-400 dark:bg-red-400/10 dark:border-red-400/30";
+      default:
+        return "text-amber-700 bg-amber-100 border-amber-300 dark:text-amber-400 dark:bg-amber-400/10 dark:border-amber-400/30";
     }
   };
 

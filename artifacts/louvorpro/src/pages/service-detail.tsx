@@ -211,10 +211,10 @@ export default function ServiceDetail() {
               <Button size="sm" onClick={() => setAddSongOpen(true)}><Plus className="w-4 h-4 mr-1"/> Adicionar Música</Button>
             )}
             <Dialog open={addSongOpen} onOpenChange={(open) => { setAddSongOpen(open); if (!open) { setSongSearch(""); setSelectedSongId(""); setSongKeyOverride(""); } }}>
-              <DialogContent className="sm:max-w-[460px]">
+              <DialogContent className="sm:max-w-[460px] max-h-[70vh] sm:max-h-[80vh] flex flex-col">
                 <DialogHeader><DialogTitle>Adicionar ao Setlist</DialogTitle></DialogHeader>
-                <div className="space-y-4 pt-2">
-                  <div className="relative">
+                <div className="flex flex-col flex-1 min-h-0 gap-4 pt-2 overflow-hidden">
+                  <div className="relative shrink-0">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
                     <Input
                       className="pl-9"
@@ -223,7 +223,7 @@ export default function ServiceDetail() {
                       onChange={e => { setSongSearch(e.target.value); setSelectedSongId(""); }}
                     />
                   </div>
-                  <div className="max-h-52 overflow-y-auto rounded-lg border border-border/50 divide-y divide-border/30">
+                  <div className="flex-1 min-h-0 overflow-y-auto rounded-lg border border-border/50 divide-y divide-border/30">
                     {(() => {
                       const term = songSearch.toLowerCase();
                       const filtered = (songs || []).filter(s =>
@@ -252,14 +252,16 @@ export default function ServiceDetail() {
                       ));
                     })()}
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium">Substituição de Tom (Opcional)</label>
-                    <Input placeholder="ex: G" value={songKeyOverride} onChange={e => setSongKeyOverride(e.target.value)} />
-                    <p className="text-xs text-muted-foreground">Deixe em branco para usar o tom padrão da música</p>
+                  <div className="shrink-0 space-y-3">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium">Substituição de Tom (Opcional)</label>
+                      <Input placeholder="ex: G" value={songKeyOverride} onChange={e => setSongKeyOverride(e.target.value)} />
+                      <p className="text-xs text-muted-foreground">Deixe em branco para usar o tom padrão da música</p>
+                    </div>
+                    <Button className="w-full" onClick={handleAddSong} disabled={!selectedSongId || addSongMutation.isPending}>
+                      {addSongMutation.isPending ? "Adicionando..." : "Adicionar ao Setlist"}
+                    </Button>
                   </div>
-                  <Button className="w-full" onClick={handleAddSong} disabled={!selectedSongId || addSongMutation.isPending}>
-                    {addSongMutation.isPending ? "Adicionando..." : "Adicionar ao Setlist"}
-                  </Button>
                 </div>
               </DialogContent>
             </Dialog>
