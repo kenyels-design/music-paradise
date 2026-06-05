@@ -42,7 +42,7 @@ export function AppSidebar() {
     <Sidebar className="border-r border-border bg-sidebar">
       <SidebarHeader className="p-4 pt-6 border-b border-border/50">
         <div className="flex items-center gap-3 px-2">
-          <img src="/favicon.png" alt="LouvorPro" className="h-10 w-10 object-contain" />
+          <img src="/android-chrome-192x192.png" alt="LouvorPro" className="h-10 w-10 object-contain" />
         </div>
       </SidebarHeader>
       <SidebarContent className="pt-4">

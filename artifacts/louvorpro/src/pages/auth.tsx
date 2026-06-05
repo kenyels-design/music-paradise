@@ -59,7 +59,7 @@ export default function AuthPage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center mb-8">
-          <img src="/favicon.png" alt="LouvorPro" className="h-20 w-20 object-contain mb-4" />
+          <img src="/android-chrome-192x192.png" alt="LouvorPro" className="h-20 w-20 object-contain mb-4" />
           <p className="text-muted-foreground mt-1 text-sm">Gestão de ministério de louvor</p>
         </div>
 
