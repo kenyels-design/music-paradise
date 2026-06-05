@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,18 +8,40 @@ import { useToast } from "@/hooks/use-toast";
 import { LogIn, UserPlus } from "lucide-react";
 
 type Tab = "login" | "cadastro";
+type View = "login" | "forgot-password";
 
 export default function AuthPage() {
   const [tab, setTab] = useState<Tab>("login");
+  const [view, setView] = useState<View>("login");
   const [loading, setLoading] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
 
   const { signIn, signUp } = useAuth();
   const { toast } = useToast();
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: window.location.origin + "/reset-password",
+      });
+      if (error) throw error;
+      toast({ title: "Link enviado!", description: "Verifique seu email." });
+      setResetEmail("");
+      setView("login");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Erro ao enviar link";
+      toast({ title: "Erro ao enviar link", description: traduzirErro(message), variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,7 +89,7 @@ export default function AuthPage() {
         <div className="bg-card border border-border rounded-2xl shadow-xl overflow-hidden">
           <div className="flex border-b border-border">
             <button
-              onClick={() => setTab("login")}
+              onClick={() => { setTab("login"); setView("login"); }}
               className={`flex-1 py-4 text-sm font-semibold transition-colors ${
                 tab === "login"
                   ? "text-primary border-b-2 border-primary bg-primary/5"
@@ -78,7 +101,7 @@ export default function AuthPage() {
               </span>
             </button>
             <button
-              onClick={() => setTab("cadastro")}
+              onClick={() => { setTab("cadastro"); setView("login"); }}
               className={`flex-1 py-4 text-sm font-semibold transition-colors ${
                 tab === "cadastro"
                   ? "text-primary border-b-2 border-primary bg-primary/5"
@@ -93,35 +116,78 @@ export default function AuthPage() {
 
           <div className="p-6">
             {tab === "login" ? (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-1.5">
-                  <Label htmlFor="login-email">E-mail</Label>
-                  <Input
-                    id="login-email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    autoComplete="email"
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="login-password">Senha</Label>
-                  <Input
-                    id="login-password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    autoComplete="current-password"
-                  />
-                </div>
-                <Button type="submit" className="w-full mt-2" disabled={loading}>
-                  {loading ? "Entrando..." : "Entrar"}
-                </Button>
-              </form>
+              view === "forgot-password" ? (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-foreground">Recuperar senha</p>
+                    <p className="text-xs text-muted-foreground">
+                      Informe seu e-mail e enviaremos um link para redefinir sua senha.
+                    </p>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="reset-email">E-mail</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                      autoFocus
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={loading}>
+                    {loading ? "Enviando..." : "Enviar link de recuperação"}
+                  </Button>
+                  <button
+                    type="button"
+                    onClick={() => setView("login")}
+                    className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors text-center"
+                  >
+                    Voltar ao login
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="login-email">E-mail</Label>
+                    <Input
+                      id="login-email"
+                      type="email"
+                      placeholder="seu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      autoComplete="email"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label htmlFor="login-password">Senha</Label>
+                    <Input
+                      id="login-password"
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      autoComplete="current-password"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full mt-2" disabled={loading}>
+                    {loading ? "Entrando..." : "Entrar"}
+                  </Button>
+                  <div className="text-center">
+                    <button
+                      type="button"
+                      onClick={() => setView("forgot-password")}
+                      className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Esqueci minha senha
+                    </button>
+                  </div>
+                </form>
+              )
             ) : (
               <form onSubmit={handleCadastro} className="space-y-4">
                 <div className="space-y-1.5">
