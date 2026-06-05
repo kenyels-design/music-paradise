@@ -7,7 +7,7 @@ import {
   Calendar as CalendarIcon,
   Megaphone,
   ListMusic,
-  ShieldCheck,
+  Settings2,
   LogOut,
   Menu,
 } from "lucide-react";
@@ -31,6 +31,7 @@ const mainItems = [
 const moreItems = [
   { title: "Equipe", url: "/members", icon: Users },
   { title: "Playlists", url: "/playlists", icon: ListMusic },
+  { title: "Configurações", url: "/settings", icon: Settings2 },
 ];
 
 export function BottomNav() {
@@ -109,20 +110,6 @@ export function BottomNav() {
                 </button>
               );
             })}
-
-            {isAdmin && (
-              <button
-                onClick={() => handleNavAndClose("/admin/users")}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium transition-colors w-full text-left ${
-                  isActive("/admin/users")
-                    ? "bg-primary/10 text-primary"
-                    : "text-foreground hover:bg-secondary/60"
-                }`}
-              >
-                <ShieldCheck className="w-4.5 h-4.5 shrink-0" />
-                Usuários
-              </button>
-            )}
 
             <div className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-foreground">
               <span>Tema</span>

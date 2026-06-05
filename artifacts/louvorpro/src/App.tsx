@@ -16,6 +16,7 @@ import AuthPage from "./pages/auth";
 import PendingPage from "./pages/pending";
 import AdminUsers from "./pages/admin-users";
 import FreePlaylists from "./pages/playlists";
+import Settings from "./pages/settings";
 import NotFound from "@/pages/not-found";
 
 const queryClient = new QueryClient({
@@ -60,6 +61,7 @@ function AppRoutes() {
         <Route path="/announcements" component={Announcements} />
         <Route path="/playlists" component={FreePlaylists} />
         <Route path="/admin/users" component={AdminUsers} />
+        <Route path="/settings" component={Settings} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

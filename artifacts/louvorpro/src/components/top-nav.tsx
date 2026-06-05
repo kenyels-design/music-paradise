@@ -6,7 +6,7 @@ import {
   Calendar as CalendarIcon,
   Megaphone,
   ListMusic,
-  ShieldCheck,
+  Settings2,
   LogOut,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
@@ -20,6 +20,7 @@ const navItems = [
   { title: "Agenda", url: "/services", icon: CalendarIcon },
   { title: "Playlists", url: "/playlists", icon: ListMusic },
   { title: "Avisos", url: "/announcements", icon: Megaphone },
+  { title: "Configurações", url: "/settings", icon: Settings2 },
 ];
 
 export function TopNav() {
@@ -63,20 +64,6 @@ export function TopNav() {
             </Link>
           );
         })}
-
-        {isAdmin && (
-          <Link
-            href="/admin/users"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 cursor-pointer ${
-              isActive("/admin/users")
-                ? "text-primary bg-primary/10"
-                : "text-muted-foreground hover:text-foreground hover:bg-white/8"
-            }`}
-          >
-            <ShieldCheck className="w-3.5 h-3.5" />
-            Usuários
-          </Link>
-        )}
       </nav>
 
       {/* Usuário + logout */}
