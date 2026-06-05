@@ -10,6 +10,7 @@ export const userProfilesTable = pgTable("user_profiles", {
   name: text("name").notNull(),
   status: userStatusEnum("status").notNull().default("pendente"),
   isAdmin: text("is_admin").notNull().default("false"),
+  role: text("role").notNull().default("musico"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

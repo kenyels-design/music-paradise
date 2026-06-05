@@ -9,7 +9,7 @@ function getAdmin() {
 }
 
 function toClient(p: any) {
-  return { id: p.id, email: p.email, name: p.name, status: p.status, isAdmin: p.is_admin === true, createdAt: p.created_at };
+  return { id: p.id, email: p.email, name: p.name, status: p.status, role: p.role ?? "musico", isAdmin: p.is_admin === true, createdAt: p.created_at };
 }
 
 export default async function handler(req: any, res: any) {

@@ -21,33 +21,40 @@ export default async function handler(req: any, res: any) {
   if (req.method !== "PATCH") return res.status(405).json({ error: "Método não permitido" });
 
   const { id } = req.query;
-  const { status } = req.body || {};
+  const { role } = req.body || {};
 
-  if (!["pendente", "aprovado", "rejeitado"].includes(status)) {
-    return res.status(400).json({ error: "Status inválido" });
+  if (!["musico", "tecnica", "admin"].includes(role)) {
+    return res.status(400).json({ error: "Role inválido. Use: musico, tecnica ou admin" });
   }
 
   const supabase = getAdmin();
 
   const { data: current, error: fetchError } = await supabase
-    .from("user_profiles").select("*").eq("id", id).single();
-  if (fetchError || !current) return res.status(404).json({ error: "Perfil não encontrado" });
+    .from("user_profiles")
+    .select("id")
+    .eq("id", id)
+    .single();
 
-  if (status === "aprovado") {
-    const { data: existingMember } = await supabase
-      .from("members").select("id").eq("email", current.email).maybeSingle();
-
-    if (!existingMember) {
-      const { error: insertError } = await supabase.from("members").insert({
-        name: current.name, email: current.email, role: "A Definir", is_leader: false,
-      });
-      if (insertError) return res.status(500).json({ error: `Não foi possível criar membro: ${insertError.message}` });
-    }
+  if (fetchError || !current) {
+    return res.status(404).json({ error: "Perfil não encontrado" });
   }
 
+  const is_admin = role === "admin";
+
   const { data: updated, error: updateError } = await supabase
-    .from("user_profiles").update({ status }).eq("id", id).select().single();
-  if (updateError || !updated) return res.status(500).json({ error: "Erro ao atualizar status" });
+    .from("user_profiles")
+    .update({ role, is_admin })
+    .eq("id", id)
+    .select()
+    .single();
+
+  if (updateError) {
+    return res.status(500).json({ error: updateError.message ?? "Erro ao atualizar perfil" });
+  }
+
+  if (!updated) {
+    return res.status(404).json({ error: "Perfil não encontrado após update" });
+  }
 
   return res.status(200).json(toClient(updated));
 }
