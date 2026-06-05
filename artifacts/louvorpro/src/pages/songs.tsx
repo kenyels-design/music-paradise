@@ -422,14 +422,14 @@ export default function Songs() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: index * 0.05 }}
               >
-                <Card className={`h-full border transition-colors flex flex-col relative overflow-hidden ${
+                <Card className={`h-full border transition-colors duration-150 flex flex-col relative overflow-hidden ${
                   isNew && hasBrass
                     ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_hsl(180_100%_42%_/_0.08)]'
-                    : isNew 
-                    ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_hsl(180_100%_42%_/_0.08)]' 
+                    : isNew
+                    ? 'border-primary/50 bg-primary/5 shadow-[0_0_20px_hsl(180_100%_42%_/_0.08)]'
                     : hasBrass
                     ? 'border-amber-600/40 bg-amber-950/10'
-                    : 'border-border/50 hover:border-primary/30'
+                    : 'border-border/50 hover:border-primary/30 hover:bg-white/5'
                 }`}>
                   {/* Banners — ambos aparecem lado a lado quando os dois são true */}
                   {(isNew || hasBrass) && (

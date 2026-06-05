@@ -113,7 +113,7 @@ function AssignmentCard({
             </Button>
             <Button
               variant="outline"
-              className="flex-1 h-10 border-red-500/40 text-red-400 text-sm active:bg-red-500/10"
+              className="flex-1 h-10 border-red-500/40 text-red-400 text-sm active:bg-red-500/10 hover:bg-orange-500/10 hover:text-orange-400 transition-colors duration-150"
               disabled={isLoading}
               onClick={onRefuse}
             >
@@ -124,7 +124,7 @@ function AssignmentCard({
         )}
 
         {/* Link para plano completo */}
-        <Button variant="ghost" size="sm" asChild className="w-fit text-primary px-0 h-auto text-xs">
+        <Button variant="ghost" size="sm" asChild className="w-fit text-primary px-2 h-auto text-xs hover:bg-white/8 transition-colors duration-150">
           <Link href={`/services/${assignment.serviceId}`}>
             Ver plano do culto <ArrowRight className="w-3.5 h-3.5 ml-1" />
           </Link>
@@ -408,7 +408,7 @@ export default function Dashboard() {
                               href={si.song.youtubeUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-8 h-8 rounded-lg bg-red-600/10 border border-red-500/20 flex items-center justify-center text-red-400 active:bg-red-600/20 transition-colors"
+                              className="w-8 h-8 rounded-lg bg-red-600/10 border border-red-500/20 flex items-center justify-center text-red-400 hover:bg-red-600/20 transition-colors"
                               title="Abrir no YouTube"
                             >
                               <Youtube className="w-3.5 h-3.5" />
@@ -419,7 +419,7 @@ export default function Dashboard() {
                               href={si.song.cifraClubUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary active:bg-primary/20 transition-colors"
+                              className="w-8 h-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary hover:bg-primary/20 transition-colors"
                               title="Abrir no Cifra Club"
                             >
                               <BookMarked className="w-3.5 h-3.5" />

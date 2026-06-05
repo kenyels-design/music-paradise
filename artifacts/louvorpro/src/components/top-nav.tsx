@@ -32,7 +32,7 @@ export function TopNav() {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 h-14 bg-card border-b border-border flex items-center px-4 gap-4">
       {/* Logo + nome */}
-      <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-4">
+      <Link href="/" className="flex items-center gap-2.5 shrink-0 mr-4 px-2 py-1 rounded-md transition-colors duration-150 hover:bg-white/5 cursor-pointer">
         <img
           src="/android-chrome-192x192.png"
           alt="LouvorPro"
@@ -51,10 +51,10 @@ export function TopNav() {
             <Link
               key={item.url}
               href={item.url}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 cursor-pointer ${
                 active
                   ? "text-primary bg-primary/10"
-                  : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                  : "text-muted-foreground hover:text-foreground hover:bg-white/8"
               }`}
             >
               <item.icon className="w-3.5 h-3.5" />
@@ -66,10 +66,10 @@ export function TopNav() {
         {isAdmin && (
           <Link
             href="/admin/users"
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors duration-150 cursor-pointer ${
               isActive("/admin/users")
                 ? "text-primary bg-primary/10"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/60"
+                : "text-muted-foreground hover:text-foreground hover:bg-white/8"
             }`}
           >
             <ShieldCheck className="w-3.5 h-3.5" />

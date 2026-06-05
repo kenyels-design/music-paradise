@@ -293,7 +293,7 @@ export default function Members() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.05 }}
             >
-              <Card className="overflow-hidden hover:shadow-md transition-shadow border-border/50">
+              <Card className="overflow-hidden hover:shadow-md hover:bg-white/5 hover:border-white/10 transition-all duration-150 border-border/50">
                 <CardContent className="p-0">
                   <div className="p-6">
                     <div className="flex justify-between items-start mb-4">
