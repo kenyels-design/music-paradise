@@ -1,10 +1,17 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/hooks/use-toast";
 
-export function useRealtimeNotifications(userId: string | undefined) {
+export function useRealtimeNotifications(
+  userId: string | undefined,
+  onNewNotification?: () => void
+) {
   const { toast } = useToast();
   const [unreadCount, setUnreadCount] = useState(0);
+
+  // Stable ref so the subscription effect doesn't re-run when callback changes
+  const onNewNotificationRef = useRef(onNewNotification);
+  useEffect(() => { onNewNotificationRef.current = onNewNotification; });
 
   // Load initial unread count
   useEffect(() => {
@@ -35,6 +42,7 @@ export function useRealtimeNotifications(userId: string | undefined) {
           const n = payload.new as { title: string; body: string };
           setUnreadCount((c) => c + 1);
           toast({ title: n.title, description: n.body });
+          onNewNotificationRef.current?.();
         }
       )
       .subscribe();

@@ -10,7 +10,6 @@ import {
   Settings2,
   LogOut,
   Menu,
-  Bell,
 } from "lucide-react";
 import {
   Sheet,
@@ -19,10 +18,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/auth-context";
-import { useNotifications } from "@/contexts/notifications-context";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "./theme-toggle";
+import { NotificationsDropdown } from "./notifications-dropdown";
 
 const mainItems = [
   { title: "Início", url: "/", icon: Home },
@@ -42,8 +40,6 @@ export function BottomNav() {
   const [location, navigate] = useLocation();
   const { profile, signOut } = useAuth();
   const isAdmin = !!profile?.isAdmin;
-  const { unreadCount, markAllRead } = useNotifications();
-  const { toast } = useToast();
 
   const isActive = (url: string) =>
     url === "/" ? location === "/" : location.startsWith(url);
@@ -83,7 +79,7 @@ export function BottomNav() {
           {/* Botão "Mais" */}
           <button
             onClick={() => setOpen(true)}
-            className="flex flex-col items-center justify-center gap-1 flex-1 h-full text-muted-foreground"
+            className="flex flex-col items-center justify-center gap-1 flex-1 h-full text-muted-foreground hover:text-foreground transition-colors"
           >
             <Menu className="w-5 h-5" />
             <span className="text-[10px] font-medium">Mais</span>
@@ -116,27 +112,10 @@ export function BottomNav() {
               );
             })}
 
-            <button
-              onClick={() => { markAllRead(); setOpen(false); toast({ title: "Notificações marcadas como lidas" }); }}
-              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium w-full text-left text-foreground hover:bg-secondary/60 transition-colors"
-            >
-              <span className="relative shrink-0">
-                <Bell className="w-4 h-4" />
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 px-0.5 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </span>
-              <span>
-                Notificações
-                {unreadCount > 0 && (
-                  <span className="ml-2 text-xs text-muted-foreground">
-                    ({unreadCount} nova{unreadCount !== 1 ? "s" : ""})
-                  </span>
-                )}
-              </span>
-            </button>
+            <div className="flex items-center justify-between px-2 py-1">
+              <span className="text-sm font-medium">Notificações</span>
+              <NotificationsDropdown />
+            </div>
 
             <div className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-foreground">
               <span>Tema</span>
