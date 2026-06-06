@@ -8,8 +8,11 @@ import { ptBR } from "date-fns/locale";
 import { Megaphone, Plus, Trash2, Pin, CalendarOff } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
+
+const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -46,11 +49,30 @@ export default function Announcements() {
 
   const createMutation = useMutation({
     mutationFn: db.createAnnouncement,
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["announcements"] });
       toast({ title: "Aviso publicado" });
       setIsDialogOpen(false);
       form.reset();
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (token) {
+        fetch(`${API_BASE}/api/push/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            sendToAll: true,
+            title: variables.title,
+            body: variables.body,
+            type: "announcement",
+            url: "/announcements",
+          }),
+        }).catch(() => {});
+      }
     },
   });
 

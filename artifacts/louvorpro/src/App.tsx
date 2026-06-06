@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 import { AuthProvider, useAuth } from "@/contexts/auth-context";
+import { NotificationsProvider } from "@/contexts/notifications-context";
 import { Layout } from "./components/layout";
 import Dashboard from "./pages/dashboard";
 import Members from "./pages/members";
@@ -51,6 +52,7 @@ function AppRoutes() {
   }
 
   return (
+    <NotificationsProvider>
     <Layout>
       <Switch>
         <Route path="/" component={Dashboard} />
@@ -65,6 +67,7 @@ function AppRoutes() {
         <Route component={NotFound} />
       </Switch>
     </Layout>
+    </NotificationsProvider>
   );
 }
 

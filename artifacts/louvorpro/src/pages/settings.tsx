@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User, CalendarDays, ShieldCheck, Trash2, Plus,
   KeyRound, Save, CalendarIcon, Settings2, Users2,
+  Bell, BellRing, BellOff,
 } from "lucide-react";
 import * as db from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
@@ -23,6 +24,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import AdminUsers from "./admin-users";
 import { BandTemplatesManager } from "@/components/band-templates-manager";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -38,6 +40,8 @@ export default function Settings() {
   const { ConfirmDialog: ProfileConfirmDialog } = useUnsavedChanges(
     name.trim() !== (profile?.name ?? "")
   );
+
+  const { isSupported: pushSupported, permission: pushPermission, isSubscribed, subscribe } = usePushNotifications();
 
   const updateNameMutation = useMutation({
     mutationFn: async (newName: string) => {
@@ -212,6 +216,47 @@ export default function Settings() {
               </p>
             </CardContent>
           </Card>
+
+          {pushSupported && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  {isSubscribed ? (
+                    <BellRing className="w-4 h-4 text-primary" />
+                  ) : (
+                    <Bell className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  Notificações
+                </CardTitle>
+                <CardDescription>
+                  Receba alertas quando você for escalado ou houver um novo aviso.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {isSubscribed ? (
+                  <div className="flex items-center gap-2">
+                    <BellRing className="w-4 h-4 text-primary shrink-0" />
+                    <span className="text-sm text-foreground">Notificações ativas neste dispositivo</span>
+                  </div>
+                ) : pushPermission === "denied" ? (
+                  <div className="flex items-start gap-2">
+                    <BellOff className="w-4 h-4 text-muted-foreground shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-foreground">Notificações bloqueadas</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Habilite nas configurações do navegador para este site e recarregue a página.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <Button variant="outline" onClick={subscribe}>
+                    <Bell className="w-4 h-4 mr-2" />
+                    Ativar notificações
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </TabsContent>
 
         {/* ─── Ausências ────────────────────────────────────────────────────── */}

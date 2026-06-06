@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
@@ -145,10 +146,34 @@ export default function ServiceDetail() {
 
   const addMemberMutation = useMutation({
     mutationFn: db.createServiceAssignment,
-    onSuccess: () => {
+    onSuccess: async (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["assignments", serviceId] });
       toast({ title: "Membro escalado" });
       setAddMemberOpen(false);
+
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData?.session?.access_token;
+      if (token && service) {
+        const dateStr = service.date
+          ? format(parseISO(service.date), "dd/MM/yyyy", { locale: ptBR })
+          : "";
+        const body = [service.title, dateStr].filter(Boolean).join(" — ");
+        fetch(`${API_BASE}/api/push/send`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            memberIds: [variables.memberId],
+            title: "Você foi escalado!",
+            body,
+            type: "assigned",
+            referenceId: serviceId,
+            url: `/services/${serviceId}`,
+          }),
+        }).catch(() => {});
+      }
     },
   });
 

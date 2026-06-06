@@ -10,6 +10,7 @@ import {
   Settings2,
   LogOut,
   Menu,
+  Bell,
 } from "lucide-react";
 import {
   Sheet,
@@ -18,6 +19,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { useAuth } from "@/contexts/auth-context";
+import { useNotifications } from "@/contexts/notifications-context";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -39,6 +41,7 @@ export function BottomNav() {
   const [location, navigate] = useLocation();
   const { profile, signOut } = useAuth();
   const isAdmin = !!profile?.isAdmin;
+  const { unreadCount, markAllRead } = useNotifications();
 
   const isActive = (url: string) =>
     url === "/" ? location === "/" : location.startsWith(url);
@@ -110,6 +113,28 @@ export function BottomNav() {
                 </button>
               );
             })}
+
+            <button
+              onClick={() => { markAllRead(); setOpen(false); navigate("/announcements"); }}
+              className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium w-full text-left text-foreground hover:bg-secondary/60 transition-colors"
+            >
+              <span className="relative shrink-0">
+                <Bell className="w-4 h-4" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 min-w-3.5 h-3.5 px-0.5 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+                    {unreadCount > 9 ? "9+" : unreadCount}
+                  </span>
+                )}
+              </span>
+              <span>
+                Notificações
+                {unreadCount > 0 && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    ({unreadCount} nova{unreadCount !== 1 ? "s" : ""})
+                  </span>
+                )}
+              </span>
+            </button>
 
             <div className="flex items-center justify-between px-3 py-3 rounded-lg text-sm font-medium text-foreground">
               <span>Tema</span>

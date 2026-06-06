@@ -8,8 +8,10 @@ import {
   ListMusic,
   Settings2,
   LogOut,
+  Bell,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth-context";
+import { useNotifications } from "@/contexts/notifications-context";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -24,9 +26,10 @@ const navItems = [
 ];
 
 export function TopNav() {
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
   const { profile, signOut } = useAuth();
   const isAdmin = !!profile?.isAdmin;
+  const { unreadCount, markAllRead } = useNotifications();
 
   const isActive = (url: string) =>
     url === "/" ? location === "/" : location.startsWith(url);
@@ -69,6 +72,18 @@ export function TopNav() {
       {/* Usuário + logout */}
       <div className="flex items-center gap-2 shrink-0">
         <ThemeToggle />
+        <button
+          className="relative w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors duration-150"
+          onClick={() => { markAllRead(); navigate("/announcements"); }}
+          title="Notificações"
+        >
+          <Bell className="w-4 h-4" />
+          {unreadCount > 0 && (
+            <span className="absolute top-0.5 right-0.5 min-w-3.5 h-3.5 px-0.5 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full flex items-center justify-center leading-none">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </button>
         <div className="text-right hidden lg:block">
           <p className="text-xs font-medium text-foreground leading-tight">
             {profile?.name}
