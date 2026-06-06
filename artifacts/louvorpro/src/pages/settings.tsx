@@ -4,7 +4,7 @@ import { ptBR } from "date-fns/locale";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   User, CalendarDays, ShieldCheck, Trash2, Plus,
-  KeyRound, Save, CalendarIcon, Settings2,
+  KeyRound, Save, CalendarIcon, Settings2, Users2,
 } from "lucide-react";
 import * as db from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import AdminUsers from "./admin-users";
+import { BandTemplatesManager } from "@/components/band-templates-manager";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -130,13 +131,18 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="perfil" className="w-full">
-        <TabsList className={`grid w-full ${isAdmin ? "grid-cols-3" : "grid-cols-2"} max-w-md`}>
+        <TabsList className={`grid w-full ${isAdmin ? "grid-cols-4" : "grid-cols-2"} max-w-xl`}>
           <TabsTrigger value="perfil" className="flex items-center gap-1.5">
             <User className="w-3.5 h-3.5" /> Meu Perfil
           </TabsTrigger>
           <TabsTrigger value="ausencias" className="flex items-center gap-1.5">
             <CalendarDays className="w-3.5 h-3.5" /> Ausências
           </TabsTrigger>
+          {isAdmin && (
+            <TabsTrigger value="templates" className="flex items-center gap-1.5">
+              <Users2 className="w-3.5 h-3.5" /> Templates
+            </TabsTrigger>
+          )}
           {isAdmin && (
             <TabsTrigger value="admin" className="flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5" /> Administração
@@ -342,6 +348,13 @@ export default function Settings() {
             )}
           </div>
         </TabsContent>
+
+        {/* ─── Templates ───────────────────────────────────────────────────── */}
+        {isAdmin && (
+          <TabsContent value="templates" className="mt-6">
+            <BandTemplatesManager />
+          </TabsContent>
+        )}
 
         {/* ─── Administração ────────────────────────────────────────────────── */}
         {isAdmin && (

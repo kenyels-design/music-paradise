@@ -27,6 +27,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
+
+interface BandTemplateOption {
+  id: number;
+  name: string;
+  type: string;
+  isActive: boolean;
+  members: { memberId: number; role: string | null }[];
+}
+
+const templateTypeLabels: Record<string, string> = {
+  weekend: "Fim de Semana",
+  thursday: "Quinta-feira",
+  other: "Outro",
+};
+
 const statusLabel: Record<string, string> = {
   draft: "Agendado",
   confirmed: "Confirmado",
@@ -72,6 +88,11 @@ export default function ServiceDetail() {
   const { data: songs } = useQuery({ queryKey: ["songs"], queryFn: db.listSongs });
   const { data: members } = useQuery({ queryKey: ["members"], queryFn: db.listMembers });
   const { data: absences } = useQuery({ queryKey: ["absences"], queryFn: db.listAbsences });
+  const { data: bandTemplates } = useQuery<BandTemplateOption[]>({
+    queryKey: ["band-templates"],
+    queryFn: () => fetch(`${API_BASE}/api/band-templates`).then(r => r.json()),
+    enabled: isAdmin,
+  });
 
   const absentMemberIds = new Set(
     (absences || [])
@@ -140,6 +161,7 @@ export default function ServiceDetail() {
   const [songSearch, setSongSearch] = useState("");
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [memberRoleOverride, setMemberRoleOverride] = useState("");
+  const [selectedTemplateId, setSelectedTemplateId] = useState("");
 
   const handleAddSong = () => {
     if (!selectedSongId) return;
@@ -164,6 +186,32 @@ export default function ServiceDetail() {
     if (!playlistForm.name.trim()) return;
     createPlaylistMutation.mutate(playlistForm);
   };
+
+  const applyTemplateMutation = useMutation({
+    mutationFn: async (templateId: number) => {
+      const template = bandTemplates?.find(t => t.id === templateId);
+      if (!template) throw new Error("Template não encontrado");
+      const existingMemberIds = new Set(assignments?.map(a => a.memberId) ?? []);
+      const newMembers = template.members.filter(m => !existingMemberIds.has(m.memberId));
+      await Promise.all(
+        newMembers.map(m =>
+          db.createServiceAssignment({ serviceId, memberId: m.memberId, role: m.role || null })
+        )
+      );
+      return newMembers.length;
+    },
+    onSuccess: (count: number) => {
+      queryClient.invalidateQueries({ queryKey: ["assignments", serviceId] });
+      if (count === 0) {
+        toast({ title: "Nenhum membro novo", description: "Todos já estão escalados." });
+      } else {
+        toast({ title: `${count} membro${count !== 1 ? "s" : ""} escalado${count !== 1 ? "s" : ""}` });
+      }
+      setSelectedTemplateId("");
+    },
+    onError: (err: Error) =>
+      toast({ title: "Erro ao aplicar template", description: err.message, variant: "destructive" }),
+  });
 
   if (loadingService) {
     return <div className="space-y-4"><Skeleton className="h-10 w-32"/><Skeleton className="h-64 w-full"/></div>;
@@ -405,6 +453,40 @@ export default function ServiceDetail() {
               </DialogContent>
             </Dialog>
           </div>
+
+          {/* Template application row — admin only */}
+          {isAdmin && bandTemplates && bandTemplates.filter(t => t.isActive).length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
+                <SelectTrigger className="flex-1 sm:flex-none sm:w-72 h-9">
+                  <SelectValue placeholder="Aplicar template de banda..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {bandTemplates
+                    .filter(t => t.isActive)
+                    .map(t => (
+                      <SelectItem key={t.id} value={t.id.toString()}>
+                        <span>{t.name}</span>
+                        <span className="text-muted-foreground text-xs ml-2">
+                          ({templateTypeLabels[t.type] ?? t.type})
+                        </span>
+                      </SelectItem>
+                    ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 shrink-0"
+                disabled={!selectedTemplateId || applyTemplateMutation.isPending}
+                onClick={() =>
+                  selectedTemplateId && applyTemplateMutation.mutate(parseInt(selectedTemplateId))
+                }
+              >
+                {applyTemplateMutation.isPending ? "Aplicando..." : "Aplicar"}
+              </Button>
+            </div>
+          )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {loadingAssignments ? (
