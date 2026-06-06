@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -88,6 +89,8 @@ export default function Members() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [channelMapOpen, setChannelMapOpen] = useState(false);
+
+  const { ConfirmDialog } = useUnsavedChanges(isDialogOpen);
 
   const form = useForm<MemberFormValues>({
     resolver: zodResolver(memberSchema),
@@ -344,6 +347,7 @@ export default function Members() {
           ))
         )}
       </div>
+      <ConfirmDialog />
     </div>
   );
 }

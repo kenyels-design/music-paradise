@@ -22,6 +22,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import AdminUsers from "./admin-users";
 import { BandTemplatesManager } from "@/components/band-templates-manager";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
@@ -31,8 +32,12 @@ export default function Settings() {
   const queryClient = useQueryClient();
   const isAdmin = !!profile?.isAdmin;
 
-  // ── Meu Perfil ───────────────────────────────────────────────────────────���──
+  // ── Meu Perfil ───────────────────────────────────────────────────────────────
   const [name, setName] = useState(profile?.name ?? "");
+
+  const { ConfirmDialog: ProfileConfirmDialog } = useUnsavedChanges(
+    name.trim() !== (profile?.name ?? "")
+  );
 
   const updateNameMutation = useMutation({
     mutationFn: async (newName: string) => {
@@ -363,6 +368,7 @@ export default function Settings() {
           </TabsContent>
         )}
       </Tabs>
+      <ProfileConfirmDialog />
     </div>
   );
 }

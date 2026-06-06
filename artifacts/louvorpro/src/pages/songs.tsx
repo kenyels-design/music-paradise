@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -92,6 +93,8 @@ export default function Songs() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [healthOpen, setHealthOpen] = useState(false);
+
+  const { ConfirmDialog } = useUnsavedChanges(isDialogOpen);
 
   const { data: healthScore, isLoading: healthLoading } = useQuery({
     queryKey: ["healthScore"],
@@ -531,6 +534,7 @@ export default function Songs() {
           })
         )}
       </div>
+      <ConfirmDialog />
     </div>
   );
 }

@@ -12,6 +12,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as db from "@/lib/db";
 import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
+import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -162,6 +163,10 @@ export default function ServiceDetail() {
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [memberRoleOverride, setMemberRoleOverride] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState("");
+
+  const { ConfirmDialog } = useUnsavedChanges(
+    addSongOpen || addMemberOpen || addPlaylistOpen
+  );
 
   const handleAddSong = () => {
     if (!selectedSongId) return;
@@ -656,6 +661,7 @@ export default function ServiceDetail() {
           )}
         </TabsContent>
       </Tabs>
+      <ConfirmDialog />
     </div>
   );
 }
