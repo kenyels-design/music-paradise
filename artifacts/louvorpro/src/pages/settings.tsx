@@ -45,10 +45,10 @@ export default function Settings() {
 
   const updateNameMutation = useMutation({
     mutationFn: async (newName: string) => {
-      const res = await fetch(`${API_BASE}/api/profiles/${profile!.id}/name`, {
+      const res = await fetch(`${API_BASE}/api/profiles/${profile!.id}/update`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newName }),
+        body: JSON.stringify({ field: "name", value: newName }),
       });
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));

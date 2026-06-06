@@ -47,10 +47,10 @@ async function fetchProfiles(): Promise<UserProfile[]> {
 }
 
 async function updateStatus(id: string, status: UserStatus): Promise<UserProfile> {
-  const res = await fetch(`${API_BASE}/api/profiles/${id}/status`, {
+  const res = await fetch(`${API_BASE}/api/profiles/${id}/update`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ status }),
+    body: JSON.stringify({ field: "status", value: status }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -60,10 +60,10 @@ async function updateStatus(id: string, status: UserStatus): Promise<UserProfile
 }
 
 async function updateRole(targetUserId: string, novaRole: UserRole): Promise<UserProfile> {
-  const res = await fetch(`${API_BASE}/api/profiles/${targetUserId}/role`, {
+  const res = await fetch(`${API_BASE}/api/profiles/${targetUserId}/update`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ role: novaRole }),
+    body: JSON.stringify({ field: "role", value: novaRole }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
