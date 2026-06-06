@@ -276,7 +276,11 @@ export default function Songs() {
         </Dialog>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto">
+          <DialogContent
+            className="sm:max-w-[520px] max-h-[90vh] overflow-y-auto"
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Música" : "Adicionar Música"}</DialogTitle>
             </DialogHeader>

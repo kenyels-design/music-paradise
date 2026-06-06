@@ -221,7 +221,11 @@ export default function Members() {
           )}
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[480px]">
+          <DialogContent
+            className="sm:max-w-[480px]"
+            onPointerDownOutside={(e) => e.preventDefault()}
+            onInteractOutside={(e) => e.preventDefault()}
+          >
             <DialogHeader>
               <DialogTitle>{editingId ? "Editar Membro" : "Adicionar Membro"}</DialogTitle>
             </DialogHeader>

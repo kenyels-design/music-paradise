@@ -297,7 +297,10 @@ export default function Services() {
 
       {/* ── Dialog: Criar Culto ── */}
       <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-        <DialogContent>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Agendar Novo Culto</DialogTitle>
           </DialogHeader>
@@ -312,7 +315,10 @@ export default function Services() {
 
       {/* ── Dialog: Editar Culto ── */}
       <Dialog open={!!editingService} onOpenChange={open => !open && setEditingService(null)}>
-        <DialogContent>
+        <DialogContent
+          onPointerDownOutside={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+        >
           <DialogHeader>
             <DialogTitle>Editar Culto</DialogTitle>
           </DialogHeader>

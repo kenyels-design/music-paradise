@@ -264,7 +264,11 @@ export default function ServiceDetail() {
               <Button size="sm" onClick={() => setAddSongOpen(true)}><Plus className="w-4 h-4 mr-1"/> Adicionar Música</Button>
             )}
             <Dialog open={addSongOpen} onOpenChange={(open) => { setAddSongOpen(open); if (!open) { setSongSearch(""); setSelectedSongId(""); setSongKeyOverride(""); } }}>
-              <DialogContent className="sm:max-w-[460px] max-h-[70vh] sm:max-h-[80vh] flex flex-col">
+              <DialogContent
+                className="sm:max-w-[460px] max-h-[70vh] sm:max-h-[80vh] flex flex-col"
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+              >
                 <DialogHeader><DialogTitle>Adicionar ao Setlist</DialogTitle></DialogHeader>
                 <div className="flex flex-col flex-1 min-h-0 gap-4 pt-2 overflow-hidden">
                   <div className="relative shrink-0">
@@ -411,7 +415,10 @@ export default function ServiceDetail() {
               <Button size="sm" onClick={() => setAddMemberOpen(true)}><Plus className="w-4 h-4 mr-1"/> Escalar Membro</Button>
             )}
             <Dialog open={addMemberOpen} onOpenChange={setAddMemberOpen}>
-              <DialogContent>
+              <DialogContent
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+              >
                 <DialogHeader><DialogTitle>Escalar Membro da Equipe</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-4">
                   {absentMemberIds.size > 0 && (
@@ -540,7 +547,11 @@ export default function ServiceDetail() {
               <Button size="sm" onClick={() => setAddPlaylistOpen(true)}><Plus className="w-4 h-4 mr-1"/> Adicionar Playlist</Button>
             )}
             <Dialog open={addPlaylistOpen} onOpenChange={setAddPlaylistOpen}>
-              <DialogContent className="sm:max-w-[500px]">
+              <DialogContent
+                className="sm:max-w-[500px]"
+                onPointerDownOutside={(e) => e.preventDefault()}
+                onInteractOutside={(e) => e.preventDefault()}
+              >
                 <DialogHeader><DialogTitle>Nova Playlist</DialogTitle></DialogHeader>
                 <div className="space-y-4 pt-4">
                   <div className="space-y-2">
