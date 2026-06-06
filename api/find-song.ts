@@ -63,7 +63,7 @@ Retorne no máximo 5 sugestões. Use apenas títulos que existam exatamente na l
       "x-api-key": apiKey,
     },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514",
+      model: "claude-sonnet-4-6",
       max_tokens: 1000,
       system: "Você é um assistente de música gospel. Responda sempre em JSON válido.",
       messages: [{ role: "user", content: prompt }],
