@@ -1,3 +1,4 @@
+// v2 - uses /api/find-song backend endpoint
 import { useState } from "react";
 import { BookOpen, Sparkles, Copy, Loader2 } from "lucide-react";
 import {
