@@ -11,6 +11,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/lib/supabase";
+
+const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
 
 interface FindSongHelperProps {
   songs: Array<{
@@ -44,7 +47,7 @@ export function FindSongHelper({ songs }: FindSongHelperProps) {
   const handleSearch = async () => {
     if (!verse.trim()) return;
 
-    // Apply solo filter if provided
+    // Solo filter stays in the frontend — it uses `tags` from the local songs array
     let pool = songs;
     const soloName = soloFilter.trim().toLowerCase();
     if (soloName) {
@@ -65,48 +68,37 @@ export function FindSongHelper({ songs }: FindSongHelperProps) {
     setEmpty(false);
 
     try {
-      const songList = pool.map((s) => `"${s.title}"`).join(", ");
-      const soloContext = soloName
-        ? `\nContexto adicional: estas músicas são especificamente as que ${soloFilter.trim()} canta como solista.`
-        : "";
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      if (!token) {
+        toast({ title: "Sessão expirada. Faça login novamente.", variant: "destructive" });
+        return;
+      }
 
-      const prompt = `Tenho o seguinte repertório de músicas gospel: ${songList}.${soloContext}
-
-Com base no versículo ou passagem bíblica a seguir, quais músicas do meu repertório têm conexão temática forte?
-
-Versículo: "${verse.trim()}"
-
-Responda APENAS com JSON válido (sem markdown, sem texto adicional), neste formato:
-[
-  { "title": "título exato da música do repertório", "reason": "justificativa em 1-2 frases" }
-]
-
-Retorne no máximo 5 sugestões. Use apenas títulos que existam exatamente na lista fornecida. Se não houver conexão forte, retorne [].`;
-
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
+      const response = await fetch(`${API_BASE}/api/find-song`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "anthropic-version": "2023-06-01",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          model: "claude-sonnet-4-6",
-          max_tokens: 1024,
-          system: "Você é um assistente de música gospel. Responda sempre em JSON válido.",
-          messages: [{ role: "user", content: prompt }],
-          tools: [{ type: "web_search_20260209", name: "web_search" }],
+          verseText: verse.trim(),
+          songs: pool.map((s) => ({
+            title: s.title,
+            artist: s.artist ?? "",
+            key: s.key ?? undefined,
+          })),
+          soloFilter: soloFilter.trim() || undefined,
         }),
       });
 
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
       const data = await response.json();
-      const textBlock = data.content?.find((c: { type: string }) => c.type === "text");
-      const rawText: string = textBlock?.text ?? "";
-      const parsed: Suggestion[] = JSON.parse(
-        rawText.replace(/```json|```/g, "").trim()
-      );
+      const suggestions: Suggestion[] = data.suggestions ?? [];
 
       const matched: MatchedSuggestion[] = [];
-      for (const suggestion of parsed) {
+      for (const suggestion of suggestions) {
         const found = pool.find(
           (s) => s.title.toLowerCase() === suggestion.title.toLowerCase()
         );
