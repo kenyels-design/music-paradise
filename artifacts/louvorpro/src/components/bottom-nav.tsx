@@ -21,6 +21,7 @@ import {
 import { useAuth } from "@/contexts/auth-context";
 import { useNotifications } from "@/contexts/notifications-context";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { ThemeToggle } from "./theme-toggle";
 
 const mainItems = [
@@ -42,6 +43,7 @@ export function BottomNav() {
   const { profile, signOut } = useAuth();
   const isAdmin = !!profile?.isAdmin;
   const { unreadCount, markAllRead } = useNotifications();
+  const { toast } = useToast();
 
   const isActive = (url: string) =>
     url === "/" ? location === "/" : location.startsWith(url);
@@ -115,7 +117,7 @@ export function BottomNav() {
             })}
 
             <button
-              onClick={() => { markAllRead(); setOpen(false); navigate("/announcements"); }}
+              onClick={() => { markAllRead(); setOpen(false); toast({ title: "Notificações marcadas como lidas" }); }}
               className="flex items-center gap-3 px-3 py-3 rounded-lg text-sm font-medium w-full text-left text-foreground hover:bg-secondary/60 transition-colors"
             >
               <span className="relative shrink-0">

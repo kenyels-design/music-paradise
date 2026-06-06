@@ -140,20 +140,20 @@ export default function Settings() {
       </div>
 
       <Tabs defaultValue="perfil" className="w-full">
-        <TabsList className={`grid w-full ${isAdmin ? "grid-cols-4" : "grid-cols-2"} max-w-xl`}>
-          <TabsTrigger value="perfil" className="flex items-center gap-1.5">
+        <TabsList className="flex w-full overflow-x-auto scrollbar-none gap-1 h-auto p-1 bg-muted rounded-lg">
+          <TabsTrigger value="perfil" className="whitespace-nowrap shrink-0 text-sm px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5">
             <User className="w-3.5 h-3.5" /> Meu Perfil
           </TabsTrigger>
-          <TabsTrigger value="ausencias" className="flex items-center gap-1.5">
+          <TabsTrigger value="ausencias" className="whitespace-nowrap shrink-0 text-sm px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5">
             <CalendarDays className="w-3.5 h-3.5" /> Ausências
           </TabsTrigger>
           {isAdmin && (
-            <TabsTrigger value="templates" className="flex items-center gap-1.5">
+            <TabsTrigger value="templates" className="whitespace-nowrap shrink-0 text-sm px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5">
               <Users2 className="w-3.5 h-3.5" /> Templates
             </TabsTrigger>
           )}
           {isAdmin && (
-            <TabsTrigger value="admin" className="flex items-center gap-1.5">
+            <TabsTrigger value="admin" className="whitespace-nowrap shrink-0 text-sm px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5">
               <ShieldCheck className="w-3.5 h-3.5" /> Administração
             </TabsTrigger>
           )}
