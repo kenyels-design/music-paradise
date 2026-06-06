@@ -14,6 +14,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useNotifications } from "@/contexts/notifications-context";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./theme-toggle";
+import { useToast } from "@/hooks/use-toast";
 
 const navItems = [
   { title: "Início", url: "/", icon: Home },
@@ -26,10 +27,11 @@ const navItems = [
 ];
 
 export function TopNav() {
-  const [location, navigate] = useLocation();
+  const [location] = useLocation();
   const { profile, signOut } = useAuth();
   const isAdmin = !!profile?.isAdmin;
   const { unreadCount, markAllRead } = useNotifications();
+  const { toast } = useToast();
 
   const isActive = (url: string) =>
     url === "/" ? location === "/" : location.startsWith(url);
@@ -74,7 +76,7 @@ export function TopNav() {
         <ThemeToggle />
         <button
           className="relative w-8 h-8 flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors duration-150"
-          onClick={() => { markAllRead(); navigate("/announcements"); }}
+          onClick={() => { markAllRead(); toast({ title: "Notificações marcadas como lidas" }); }}
           title="Notificações"
         >
           <Bell className="w-4 h-4" />
