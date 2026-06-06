@@ -125,10 +125,34 @@ export default function ServiceDetail() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: playlistsKey }),
   });
 
+  const { data: freePlaylists } = useQuery({
+    queryKey: ["free-playlists"],
+    queryFn: db.listFreePlaylists,
+    enabled: isAdmin,
+    select: (r) => r.data,
+  });
+
+  const linkFreePlaylistMutation = useMutation({
+    mutationFn: (fp: db.FreePlaylist) =>
+      db.createPlaylist({
+        serviceId,
+        name: fp.name,
+        notes: fp.description || "",
+        spotifyUrl: fp.spotifyUrl || "",
+        youtubeUrl: fp.youtubeUrl || "",
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: playlistsKey });
+      toast({ title: "Playlist vinculada ao culto" });
+      setSelectedFreePlaylistId("");
+    },
+  });
+
   const [addSongOpen, setAddSongOpen] = useState(false);
   const [addMemberOpen, setAddMemberOpen] = useState(false);
   const [addPlaylistOpen, setAddPlaylistOpen] = useState(false);
   const [playlistForm, setPlaylistForm] = useState({ name: "", notes: "", spotifyUrl: "", youtubeUrl: "" });
+  const [selectedFreePlaylistId, setSelectedFreePlaylistId] = useState("");
 
   const addSongMutation = useMutation({
     mutationFn: db.addToSetlist,
@@ -571,7 +595,38 @@ export default function ServiceDetail() {
             {isAdmin && (
               <Button size="sm" onClick={() => setAddPlaylistOpen(true)}><Plus className="w-4 h-4 mr-1"/> Adicionar Playlist</Button>
             )}
-            <Dialog open={addPlaylistOpen} onOpenChange={setAddPlaylistOpen}>
+          </div>
+
+          {isAdmin && freePlaylists && freePlaylists.length > 0 && (
+            <div className="flex items-center gap-2 flex-wrap">
+              <Select value={selectedFreePlaylistId} onValueChange={setSelectedFreePlaylistId}>
+                <SelectTrigger className="flex-1 sm:flex-none sm:w-72 h-9">
+                  <SelectValue placeholder="Vincular playlist existente..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {freePlaylists.map(fp => (
+                    <SelectItem key={fp.id} value={fp.id.toString()}>
+                      {fp.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-9 shrink-0 hover:bg-accent"
+                disabled={!selectedFreePlaylistId || linkFreePlaylistMutation.isPending}
+                onClick={() => {
+                  const fp = freePlaylists.find(p => p.id.toString() === selectedFreePlaylistId);
+                  if (fp) linkFreePlaylistMutation.mutate(fp);
+                }}
+              >
+                {linkFreePlaylistMutation.isPending ? "Vinculando..." : "Vincular"}
+              </Button>
+            </div>
+          )}
+
+          <Dialog open={addPlaylistOpen} onOpenChange={setAddPlaylistOpen}>
               <DialogContent
                 className="sm:max-w-[500px]"
                 onPointerDownOutside={(e) => e.preventDefault()}
@@ -627,8 +682,7 @@ export default function ServiceDetail() {
                   </DialogFooter>
                 </div>
               </DialogContent>
-            </Dialog>
-          </div>
+          </Dialog>
 
           {loadingPlaylists ? (
             <div className="space-y-3">

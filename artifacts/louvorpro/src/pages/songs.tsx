@@ -10,6 +10,7 @@ import { useAuth } from "@/contexts/auth-context";
 import { useToast } from "@/hooks/use-toast";
 import { useUnsavedChanges } from "@/hooks/use-unsaved-changes";
 
+import { FindSongHelper } from "@/components/find-song-helper";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger
@@ -172,6 +173,7 @@ export default function Songs() {
           >
             <BarChart2 className="w-4 h-4 mr-2" /> Análise do Repertório
           </Button>
+          {isAdmin && <FindSongHelper songs={songs || []} />}
           {isAdmin && (
             <Button onClick={openCreate} className="hover-elevate shadow-md flex-1 sm:flex-none">
               <Plus className="w-4 h-4 mr-2" /> Adicionar Música
