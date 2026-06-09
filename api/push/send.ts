@@ -12,7 +12,7 @@ function getAdmin() {
   const url = process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("Supabase env vars não configuradas");
-  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false } });
+  return createClient(url, key, { auth: { autoRefreshToken: false, persistSession: false }, db: { schema: "louvorpro" } });
 }
 
 async function sendPushAndSave(
