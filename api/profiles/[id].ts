@@ -21,6 +21,8 @@ export default async function handler(req: any, res: any) {
   if (req.method !== "GET") return res.status(405).json({ error: "Método não permitido" });
 
   const { id } = req.query;
+  if (!id || typeof id !== "string") return res.status(400).json({ error: "ID inválido" });
+
   const supabase = getAdmin();
 
   const { data, error } = await supabase.from("user_profiles").select("*").eq("id", id).single();
