@@ -41,7 +41,17 @@ export default function Settings() {
     name.trim() !== (profile?.name ?? "")
   );
 
-  const { isSupported: pushSupported, permission: pushPermission, isSubscribed, subscribe } = usePushNotifications();
+  const { isSupported: pushSupported, permission: pushPermission, isSubscribed, subscribe, forceResubscribe } = usePushNotifications();
+  const [isResubscribing, setIsResubscribing] = useState(false);
+
+  const handleForceResubscribe = async () => {
+    setIsResubscribing(true);
+    try {
+      await forceResubscribe();
+    } finally {
+      setIsResubscribing(false);
+    }
+  };
 
   const updateNameMutation = useMutation({
     mutationFn: async (newName: string) => {
@@ -237,6 +247,14 @@ export default function Settings() {
                   <div className="flex items-center gap-2">
                     <BellRing className="w-4 h-4 text-primary shrink-0" />
                     <span className="text-sm text-foreground">Notificações ativas neste dispositivo</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleForceResubscribe}
+                      disabled={isResubscribing}
+                    >
+                      Reativar
+                    </Button>
                   </div>
                 ) : pushPermission === "denied" ? (
                   <div className="flex items-start gap-2">

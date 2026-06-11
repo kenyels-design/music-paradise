@@ -74,5 +74,15 @@ export function usePushNotifications() {
     if (res.ok) setIsSubscribed(true);
   }, [isSupported]);
 
-  return { isSupported, permission, isSubscribed, subscribe };
+  const forceResubscribe = useCallback(async () => {
+    if (!isSupported) return;
+
+    const reg = await navigator.serviceWorker.ready;
+    const sub = await reg.pushManager.getSubscription();
+    if (sub) await sub.unsubscribe();
+
+    await subscribe();
+  }, [isSupported, subscribe]);
+
+  return { isSupported, permission, isSubscribed, subscribe, forceResubscribe };
 }
