@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 const API_BASE = import.meta.env.BASE_URL.replace(/\/$/, "");
@@ -19,9 +19,12 @@ export function usePushNotifications() {
   const [isSupported, setIsSupported] = useState(false);
   const [permission, setPermission] = useState<NotificationPermission>("default");
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const isResubscribingRef = useRef(false);
 
   // Detect support and register SW once on mount
   useEffect(() => {
+    if (isResubscribingRef.current) return;
+
     const supported =
       "serviceWorker" in navigator &&
       "PushManager" in window &&
@@ -77,6 +80,8 @@ export function usePushNotifications() {
   const forceResubscribe = useCallback(async () => {
     if (!isSupported) return;
 
+    isResubscribingRef.current = true;
+
     try {
       const registration = await navigator.serviceWorker.ready;
       const existing = await registration.pushManager.getSubscription();
@@ -88,6 +93,7 @@ export function usePushNotifications() {
       setIsSubscribed(false);
       await subscribe();
       setIsSubscribed(true);
+      isResubscribingRef.current = false;
     } catch (err) {
       console.error('forceResubscribe: erro', err);
     }
