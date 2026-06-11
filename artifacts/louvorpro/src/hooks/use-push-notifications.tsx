@@ -75,13 +75,28 @@ export function usePushNotifications() {
   }, [isSupported]);
 
   const forceResubscribe = useCallback(async () => {
+    console.log('forceResubscribe: iniciando');
     if (!isSupported) return;
 
-    const reg = await navigator.serviceWorker.ready;
-    const sub = await reg.pushManager.getSubscription();
-    if (sub) await sub.unsubscribe();
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      console.log('forceResubscribe: SW ready', registration);
 
-    await subscribe();
+      const existing = await registration.pushManager.getSubscription();
+      console.log('forceResubscribe: subscription existente', existing);
+
+      if (existing) {
+        const result = await existing.unsubscribe();
+        console.log('forceResubscribe: unsubscribe result', result);
+      }
+
+      setIsSubscribed(false);
+      console.log('forceResubscribe: chamando subscribe()');
+      await subscribe();
+      console.log('forceResubscribe: subscribe() concluído');
+    } catch (err) {
+      console.error('forceResubscribe: erro', err);
+    }
   }, [isSupported, subscribe]);
 
   return { isSupported, permission, isSubscribed, subscribe, forceResubscribe };
