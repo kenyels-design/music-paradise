@@ -41,17 +41,7 @@ export default function Settings() {
     name.trim() !== (profile?.name ?? "")
   );
 
-  const { isSupported: pushSupported, permission: pushPermission, isSubscribed, subscribe, forceResubscribe } = usePushNotifications();
-  const [isResubscribing, setIsResubscribing] = useState(false);
-
-  const handleForceResubscribe = async () => {
-    setIsResubscribing(true);
-    try {
-      await forceResubscribe();
-    } finally {
-      setIsResubscribing(false);
-    }
-  };
+  const { isSupported: pushSupported, permission: pushPermission, isSubscribed, subscribe } = usePushNotifications();
 
   const updateNameMutation = useMutation({
     mutationFn: async (newName: string) => {
