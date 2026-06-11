@@ -25,7 +25,12 @@ export default async function handler(req: any, res: any) {
 
   const supabase = getAdmin();
 
+  console.log('DEBUG id:', id);
+  console.log('DEBUG url:', process.env.VITE_SUPABASE_URL?.substring(0, 40));
+
   const { data, error } = await supabase.from("user_profiles").select("*").eq("id", id).single();
+  console.log('DEBUG data:', JSON.stringify(data));
+  console.log('DEBUG error:', JSON.stringify(error));
   if (error || !data) return res.status(404).json({ error: "Perfil não encontrado" });
   return res.status(200).json(toClient(data));
 }
