@@ -62,6 +62,9 @@ export function usePushNotifications() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
+    console.log('subscribe: enviando subscription para API');
+    console.log('subscribe: token', session.access_token ? 'presente' : 'ausente');
+
     const res = await fetch(`${API_BASE}/api/push/subscribe`, {
       method: "POST",
       headers: {
@@ -70,6 +73,10 @@ export function usePushNotifications() {
       },
       body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
     });
+
+    console.log('subscribe: response status', res.status);
+    const responseData = await res.clone().json().catch(() => ({}));
+    console.log('subscribe: response data', responseData);
 
     if (res.ok) setIsSubscribed(true);
   }, [isSupported]);
