@@ -62,9 +62,6 @@ export function usePushNotifications() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    console.log('subscribe: enviando subscription para API');
-    console.log('subscribe: token', session.access_token ? 'presente' : 'ausente');
-
     const res = await fetch(`${API_BASE}/api/push/subscribe`, {
       method: "POST",
       headers: {
@@ -74,33 +71,23 @@ export function usePushNotifications() {
       body: JSON.stringify({ endpoint: json.endpoint, keys: json.keys }),
     });
 
-    console.log('subscribe: response status', res.status);
-    const responseData = await res.clone().json().catch(() => ({}));
-    console.log('subscribe: response data', responseData);
-
     if (res.ok) setIsSubscribed(true);
   }, [isSupported]);
 
   const forceResubscribe = useCallback(async () => {
-    console.log('forceResubscribe: iniciando');
     if (!isSupported) return;
 
     try {
       const registration = await navigator.serviceWorker.ready;
-      console.log('forceResubscribe: SW ready', registration);
-
       const existing = await registration.pushManager.getSubscription();
-      console.log('forceResubscribe: subscription existente', existing);
 
       if (existing) {
-        const result = await existing.unsubscribe();
-        console.log('forceResubscribe: unsubscribe result', result);
+        await existing.unsubscribe();
       }
 
       setIsSubscribed(false);
-      console.log('forceResubscribe: chamando subscribe()');
       await subscribe();
-      console.log('forceResubscribe: subscribe() concluído');
+      setIsSubscribed(true);
     } catch (err) {
       console.error('forceResubscribe: erro', err);
     }
